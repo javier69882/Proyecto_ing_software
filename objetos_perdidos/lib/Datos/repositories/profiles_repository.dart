@@ -1,4 +1,3 @@
-// lib/Datos/repositories/profiles_repository.dart
 import 'dart:io';
 import '../models/profile_record.dart';
 
