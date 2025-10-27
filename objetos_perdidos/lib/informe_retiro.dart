@@ -6,6 +6,5 @@ import 'perfil.dart';
 class InformeRetiro extends Informe {
   Nota texto;
 
-  InformeRetiro(String titulo, ObjetoPerdido objeto, Perfil usuario, this.texto)
-      : super(titulo, objeto, usuario);
+  InformeRetiro(super.titulo, super.objeto, super.usuario, this.texto);
 }
