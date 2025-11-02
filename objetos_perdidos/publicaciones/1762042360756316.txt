@@ -1,0 +1,1 @@
+{"id":"1762042360756316","titulo":"notebook perdido","descripcion":"notebook asus rog perdido en sistemas","categoria":"Electrónica","fechaIso":"2025-10-08T00:00:00.000","lugar":"edificio de sistemas","autorId":"1761534184726781","autorNombre":"javier"}
