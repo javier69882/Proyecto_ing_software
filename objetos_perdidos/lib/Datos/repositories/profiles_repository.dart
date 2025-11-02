@@ -11,7 +11,7 @@ class ProfilesRepository {
   /// Encuentra la RAÍZ del proyecto buscando 'pubspec.yaml' hacia arriba
   
   Future<Directory> _findProjectRoot() async {
-    if (_overrideBaseDir != null) return _overrideBaseDir!;
+    if (_overrideBaseDir != null) return _overrideBaseDir;
     Directory dir = Directory.current;
     for (int i = 0; i < 20; i++) {
       final pubspec = File('${dir.path}${_sep}pubspec.yaml');

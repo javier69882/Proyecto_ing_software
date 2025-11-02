@@ -1,27 +1,29 @@
 import 'package:flutter/material.dart';
-
-// Ajusta el nombre del paquete si es distinto en tu pubspec.yaml
 import 'package:objetos_perdidos/screen/crear_perfil_screen.dart';
 import 'package:objetos_perdidos/Datos/repositories/profiles_repository.dart';
 import 'package:objetos_perdidos/screen/crear_publicacion_screen.dart';
 import 'package:objetos_perdidos/Datos/repositories/publications_repository.dart';
 import 'package:objetos_perdidos/Datos/models/publication_record.dart';
+import 'package:objetos_perdidos/ui/profile_selector.dart';
 
 void main() {
-  runApp(MainApp());
+  final controller = ProfileController(repo: ProfilesRepository());
+  runApp(MainApp(controller: controller));
 }
 
 class MainApp extends StatelessWidget {
-  MainApp({super.key});
-
-  final _repo = ProfilesRepository();
+  const MainApp({super.key, required this.controller});
+  final ProfileController controller;
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Objetos Perdidos – Demo',
-      debugShowCheckedModeBanner: false,
-      home: DemoHome(repo: _repo),
+    return ProfileScope(
+      controller: controller,
+      child: MaterialApp(
+        title: 'Objetos Perdidos – Demo',
+        debugShowCheckedModeBanner: false,
+        home: DemoHome(repo: controller.repo),
+      ),
     );
   }
 }
@@ -47,7 +49,7 @@ class _DemoHomeState extends State<DemoHome> {
 
   Future<void> _loadPublicaciones() async {
     final list = await _pubRepo.listPublications();
-    setState(() => _publicaciones = list.reversed.toList()); // mostrar recientes arriba
+    setState(() => _publicaciones = list.reversed.toList()); // recientes arriba
   }
 
   Future<void> _abrirCrearPerfil() async {
@@ -57,8 +59,8 @@ class _DemoHomeState extends State<DemoHome> {
 
     if (creado == true) {
       final path = await widget.repo.debugFilePath();
-      setState(() => _ultimaRuta = path);
       if (!mounted) return;
+      setState(() => _ultimaRuta = path);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Perfil creado correctamente.')),
       );
@@ -82,15 +84,22 @@ class _DemoHomeState extends State<DemoHome> {
 
   @override
   Widget build(BuildContext context) {
+    final perfilCtrl = ProfileScope.of(context);
+    final usuario = perfilCtrl.current?.usuario ?? 'Sin perfil';
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Demo creación de perfil')),
+      appBar: AppBar(
+        title: Text('Inicio – $usuario'),
+        actions: const [
+          ProfileSwitchAction(),         // Cambiar de perfil
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             const Text(
-              'Pulsa el botón para crear un perfil.\n'
-              'Se guardará en ./data/profiles.json',
+              'Pulsa el botón para crear un perfil.\nLa ruta exacta se mostrará abajo.',
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -98,6 +107,17 @@ class _DemoHomeState extends State<DemoHome> {
               onPressed: _abrirCrearPerfil,
               icon: const Icon(Icons.person_add),
               label: const Text('Crear perfil'),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ProfileSelectorPage()),
+                );
+              },
+              icon: const Icon(Icons.switch_account),
+              label: const Text('Cambiar de perfil'),
             ),
             const SizedBox(height: 12),
             ElevatedButton.icon(
@@ -123,7 +143,9 @@ class _DemoHomeState extends State<DemoHome> {
                       itemBuilder: (_, i) {
                         final p = _publicaciones[i];
                         final fecha = DateTime.tryParse(p.fechaIso);
-                        final fechaStr = fecha != null ? fecha.toLocal().toString().split(' ').first : p.fechaIso;
+                        final fechaStr = fecha != null
+                            ? fecha.toLocal().toString().split(' ').first
+                            : p.fechaIso;
                         return ListTile(
                           title: Text(p.titulo),
                           subtitle: Text('${p.categoria} • ${p.autorNombre}\n$fechaStr\n${p.lugar}'),

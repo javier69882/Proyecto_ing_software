@@ -12,7 +12,7 @@ class PublicationsRepository {
 
   // busca el directorio raíz del proyecto buscando 'pubspec.yaml' hacia arriba
   Future<Directory> _findProjectRoot() async {
-    if (_overrideBaseDir != null) return _overrideBaseDir!;
+    if (_overrideBaseDir != null) return _overrideBaseDir;
     Directory dir = Directory.current;
     for (int i = 0; i < 20; i++) {
       final pubspec = File('${dir.path}${_sep}pubspec.yaml');
@@ -36,7 +36,7 @@ class PublicationsRepository {
 
   Future<File> _fileForId(String id) async {
     final dir = await _resolvePublicDir();
-    return File('${dir.path}${_sep}$id.txt');
+    return File('${dir.path}$_sep$id.txt');
   }
 
   /// Lista todas las publicaciones leyendo cada archivo .txt en ./publicaciones.

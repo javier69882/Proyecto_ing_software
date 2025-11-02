@@ -9,12 +9,11 @@ class CrearPublicacionScreen extends StatefulWidget {
   final PublicationsRepository publicationsRepo;
 
   CrearPublicacionScreen({
-    Key? key,
+    super.key,
     ProfilesRepository? profilesRepository,
     PublicationsRepository? publicationsRepository,
   })  : profilesRepo = profilesRepository ?? ProfilesRepository(),
-        publicationsRepo = publicationsRepository ?? PublicationsRepository(),
-        super(key: key);
+        publicationsRepo = publicationsRepository ?? PublicationsRepository();
 
   @override
   State<CrearPublicacionScreen> createState() => _CrearPublicacionScreenState();
@@ -118,7 +117,7 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _categoria,
+              initialValue: _categoria,
               decoration: const InputDecoration(labelText: 'Categoría', border: OutlineInputBorder()),
               items: _categorias.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
               onChanged: (v) => setState(() => _categoria = v),

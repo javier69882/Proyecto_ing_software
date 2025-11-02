@@ -6,9 +6,8 @@ class CrearPerfilScreen extends StatefulWidget {
   final ProfilesRepository repo;
 
   // ❌ No uses const aquí porque instanciamos ProfilesRepository() (no es const)
-  CrearPerfilScreen({Key? key, ProfilesRepository? repository})
-      : repo = repository ?? ProfilesRepository(),
-        super(key: key);
+  CrearPerfilScreen({super.key, ProfilesRepository? repository})
+      : repo = repository ?? ProfilesRepository();
 
   @override
   State<CrearPerfilScreen> createState() => _CrearPerfilScreenState();
@@ -86,7 +85,7 @@ class _CrearPerfilScreenState extends State<CrearPerfilScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<Tipo>(
-              value: _tipo,
+              initialValue: _tipo,
               decoration: const InputDecoration(
                 labelText: 'Tipo',
                 hintText: 'Selecciona el tipo de usuario',

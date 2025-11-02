@@ -1,7 +1,5 @@
 import 'informe.dart';
 import 'nota.dart';
-import 'objeto_perdido.dart';
-import 'perfil.dart';
 
 class InformeRetiro extends Informe {
   Nota texto;
