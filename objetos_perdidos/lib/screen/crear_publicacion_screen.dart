@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:objetos_perdidos/Datos/models/profile_record.dart';
 import 'package:objetos_perdidos/Datos/repositories/profiles_repository.dart';
+import 'package:objetos_perdidos/ui/profile_selector.dart' show ProfileScope;
 import 'package:objetos_perdidos/Datos/repositories/publications_repository.dart';
 
 // widget para crear el post de un objeto perdido
@@ -59,14 +60,18 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
 
     setState(() => _guardando = true);
     try {
-      final perfiles = await widget.profilesRepo.listProfiles();
-      if (perfiles.isEmpty) {
+      final persona = ProfileScope.of(context).current;
+      if (persona == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No hay perfiles. Crea un perfil primero.')),
+          const SnackBar(content: Text('No hay perfil seleccionado. Selecciona un perfil primero.')),
         );
         return;
       }
-      final ProfileRecord current = perfiles.first;
+
+      // Usar el nombre de la persona como autor; para id mantenemos una convención
+      // sencilla: si es Perfil/Admin sin id persistido, guardamos nombre como id.
+      final autorId = persona.usuario; // alternativa simple a usar repo.listProfiles()
+      final autorNombre = persona.usuario;
 
       await widget.publicationsRepo.createPublication(
         titulo: _tituloCtrl.text.trim(),
@@ -74,8 +79,8 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
         categoria: _categoria ?? 'Varios',
         fecha: _fecha ?? DateTime.now(),
         lugar: _lugarCtrl.text.trim(),
-        autorId: current.id,
-        autorNombre: current.nombre,
+        autorId: autorId,
+        autorNombre: autorNombre,
       );
 
       if (!mounted) return;

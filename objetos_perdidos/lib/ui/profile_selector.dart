@@ -39,6 +39,12 @@ class ProfileController extends ChangeNotifier {
     _current = record.toPersona();
     notifyListeners();
   }
+
+  /// Limpia el perfil actual (logout) y notifica a los listeners.
+  void clear() {
+    _current = null;
+    notifyListeners();
+  }
 }
 
 /// Scope que expone el ProfileController en el árbol

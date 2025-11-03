@@ -5,6 +5,7 @@ import 'package:objetos_perdidos/screen/crear_publicacion_screen.dart';
 import 'package:objetos_perdidos/Datos/repositories/publications_repository.dart';
 import 'package:objetos_perdidos/Datos/models/publication_record.dart';
 import 'package:objetos_perdidos/ui/profile_selector.dart';
+import 'package:objetos_perdidos/admin.dart';
 
 void main() {
   final controller = ProfileController(repo: ProfilesRepository());
@@ -150,6 +151,40 @@ class _DemoHomeState extends State<DemoHome> {
                           title: Text(p.titulo),
                           subtitle: Text('${p.categoria} • ${p.autorNombre}\n$fechaStr\n${p.lugar}'),
                           isThreeLine: true,
+                          trailing: Builder(builder: (ctx) {
+                            final perfilCtrl = ProfileScope.of(ctx);
+                            final persona = perfilCtrl.current;
+                            final isAdmin = persona is Admin;
+                            final isAutor = persona != null && persona.usuario == p.autorNombre;
+                            if (!isAdmin && !isAutor) return const SizedBox.shrink();
+                            return IconButton(
+                              icon: const Icon(Icons.delete_outline),
+                              tooltip: 'Eliminar publicación',
+                              onPressed: () async {
+                                final confirm = await showDialog<bool>(
+                                  context: ctx,
+                                  builder: (_) => AlertDialog(
+                                    title: const Text('Confirmar eliminación'),
+                                    content: const Text('¿Eliminar esta publicación?'),
+                                    actions: [
+                                      TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
+                                      TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Eliminar')),
+                                    ],
+                                  ),
+                                );
+                                if (confirm == true) {
+                                  final ok = await _pubRepo.deletePublication(p.id, markOnly: true);
+                                  if (!mounted) return;
+                                  if (ok) {
+                                    await _loadPublicaciones();
+                                    ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Publicación eliminada')));
+                                  } else {
+                                    ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Error eliminando publicación')));
+                                  }
+                                }
+                              },
+                            );
+                          }),
                         );
                       },
                     ),
