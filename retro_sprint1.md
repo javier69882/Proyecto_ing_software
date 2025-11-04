@@ -7,9 +7,7 @@ Javier Argomedo Georgi
 Víctor Galaz
 
 ### Developer team:
-Diego Arriagada 
-Vicente García
-Matías Catril
+Diego Arriagada, Vicente García, Matías Catril
 
 # Retrospectiva Scrum
 
@@ -21,4 +19,5 @@ Al mismo tiempo, se tuvo efectividad en el proceso de planificación, manteniend
 Se identificó un problema significativo a la hora de crear el repositorio inicialmente y organizarnos en Github Projects, lo que llevó a un inicio tardío y relativamente lento respecto a lo que podría haber sido. Dicho eso, no fue una complicación que llegara mayores, y no obstaculizó el desarrollo posterior a ser resuelta.
 
 ## Mejoras para el próximo sprint
+
 Realizar reuniones todos los días sin falta y aplicar más herramientas Scrum en las mismas, dejando atrás la relativa informalidad y espontaneidad de las reuniones sostenidas este sprint—que si bien no fueron un problema en sí mismas, no dejan de ser mejorables.
