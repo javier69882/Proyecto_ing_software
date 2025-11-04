@@ -1,0 +1,1 @@
+{"id":"1762221290427816","titulo":"nuevo","descripcion":"n","categoria":"Varios","fechaIso":"2025-11-03T00:00:00.000","lugar":"casa","autorId":"javier","autorNombre":"javier"}

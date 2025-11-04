@@ -6,6 +6,7 @@ import 'package:objetos_perdidos/Datos/repositories/publications_repository.dart
 import 'package:objetos_perdidos/Datos/models/publication_record.dart';
 import 'package:objetos_perdidos/ui/profile_selector.dart';
 import 'package:objetos_perdidos/admin.dart';
+import 'package:objetos_perdidos/ui/publicaciones_feed.dart';
 
 void main() {
   final controller = ProfileController(repo: ProfilesRepository());
@@ -50,7 +51,19 @@ class _DemoHomeState extends State<DemoHome> {
 
   Future<void> _loadPublicaciones() async {
     final list = await _pubRepo.listPublications();
-    setState(() => _publicaciones = list.reversed.toList()); // recientes arriba
+
+    int idAsInt(PublicationRecord r) => int.tryParse(r.id) ?? 0;
+    DateTime f(PublicationRecord r) =>
+        DateTime.tryParse(r.fechaIso) ?? DateTime.fromMillisecondsSinceEpoch(0);
+
+    list.sort((a, b) {
+      final byId = idAsInt(b).compareTo(idAsInt(a));
+      if (byId != 0) return byId;
+      return f(b).compareTo(f(a));
+    });
+
+    if (!mounted) return;
+    setState(() => _publicaciones = list);
   }
 
   Future<void> _abrirCrearPerfil() async {
@@ -68,7 +81,6 @@ class _DemoHomeState extends State<DemoHome> {
     }
   }
 
-  // pantalla para crear el post
   Future<void> _abrirCrearPublicacion() async {
     final creado = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
@@ -92,7 +104,7 @@ class _DemoHomeState extends State<DemoHome> {
       appBar: AppBar(
         title: Text('Inicio – $usuario'),
         actions: const [
-          ProfileSwitchAction(),         // Cambiar de perfil
+          ProfileSwitchAction(), // Cambiar de perfil
         ],
       ),
       body: Padding(
@@ -104,12 +116,16 @@ class _DemoHomeState extends State<DemoHome> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
+
+            // Crear perfil
             ElevatedButton.icon(
               onPressed: _abrirCrearPerfil,
               icon: const Icon(Icons.person_add),
               label: const Text('Crear perfil'),
             ),
             const SizedBox(height: 12),
+
+            // Cambiar de perfil
             ElevatedButton.icon(
               onPressed: () async {
                 await Navigator.push(
@@ -121,11 +137,32 @@ class _DemoHomeState extends State<DemoHome> {
               label: const Text('Cambiar de perfil'),
             ),
             const SizedBox(height: 12),
+
+            // Crear publicación
             ElevatedButton.icon(
               onPressed: _abrirCrearPublicacion,
               icon: const Icon(Icons.publish),
               label: const Text('Crear publicación'),
             ),
+            const SizedBox(height: 12),
+
+            // Ver feed con filtros
+            ElevatedButton.icon(
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => PublicacionesFeedScreen(
+                      publicationsRepository: _pubRepo, // reutiliza el repo
+                    ),
+                  ),
+                );
+                if (mounted) _loadPublicaciones(); // recarga al volver
+              },
+              icon: const Icon(Icons.dynamic_feed),
+              label: const Text('Ver feed con filtros'),
+            ),
+
             const SizedBox(height: 24),
             if (_ultimaRuta != null) ...[
               const Text('Archivo de perfiles:', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -135,6 +172,8 @@ class _DemoHomeState extends State<DemoHome> {
             const Divider(),
             const Text('Publicaciones', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
+
+            // Lista simple de publicaciones
             Expanded(
               child: _publicaciones.isEmpty
                   ? const Center(child: Text('No hay publicaciones'))

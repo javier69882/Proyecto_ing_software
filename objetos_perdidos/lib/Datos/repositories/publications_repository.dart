@@ -1,8 +1,9 @@
 import 'dart:io';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import '../models/publication_record.dart';
 
-// repositorio que maneja las publicaciones de objetos perdidos
+// Repositorio que maneja las publicaciones de objetos perdidos
 class PublicationsRepository {
   final Directory? _overrideBaseDir;
 
@@ -10,9 +11,10 @@ class PublicationsRepository {
 
   static String get _sep => Platform.pathSeparator;
 
-  // busca el directorio raíz del proyecto buscando 'pubspec.yaml' hacia arriba
+  // Busca el directorio raíz del proyecto buscando 'pubspec.yaml' hacia arriba
   Future<Directory> _findProjectRoot() async {
-    if (_overrideBaseDir != null) return _overrideBaseDir;
+    final base = _overrideBaseDir;
+    if (base != null) return base;
     Directory dir = Directory.current;
     for (int i = 0; i < 20; i++) {
       final pubspec = File('${dir.path}${_sep}pubspec.yaml');
@@ -24,7 +26,7 @@ class PublicationsRepository {
     return Directory.current;
   }
 
-  // directorio raíz para almacenar archivos individuales
+  // Directorio raíz para almacenar archivos individuales
   Future<Directory> _resolvePublicDir() async {
     final root = await _findProjectRoot();
     final publicDir = Directory('${root.path}${_sep}publicaciones');
@@ -40,7 +42,7 @@ class PublicationsRepository {
   }
 
   /// Lista todas las publicaciones leyendo cada archivo .txt en ./publicaciones.
-  /// Los archivos con { "eliminada": true } son ignorados.
+  /// Los archivos con `{ "eliminada": true }` son ignorados.
   Future<List<PublicationRecord>> listPublications() async {
     try {
       final dir = await _resolvePublicDir();
@@ -58,18 +60,18 @@ class PublicationsRepository {
             }
           } catch (e) {
             // no detener el listado por un archivo corrupto
-            print('[PublicationsRepository] error reading file ${f.path}: $e');
+            debugPrint('[PublicationsRepository] error reading file ${f.path}: $e');
           }
         }
       }
       return result;
     } catch (e) {
-      print('[PublicationsRepository] listPublications error: $e');
+      debugPrint('[PublicationsRepository] listPublications error: $e');
       return <PublicationRecord>[];
     }
   }
 
-  /// crea un post, genera un id unico, y la escribe en ./publicaciones/<ID>.txt
+  /// Crea un post, genera un id único y lo escribe en `./publicaciones/<ID>.txt`
   Future<PublicationRecord> createPublication({
     required String titulo,
     required String descripcion,
@@ -98,12 +100,12 @@ class PublicationsRepository {
       await file.writeAsString(jsonEncode(map), flush: true);
       return newRecord;
     } catch (e) {
-      print('[PublicationsRepository] createPublication error: $e');
+      debugPrint('[PublicationsRepository] createPublication error: $e');
       rethrow;
     }
   }
 
-  /// lee un post por id. retorna null si no existe o si esta marcado como eliminado.
+  /// Lee un post por id. Retorna null si no existe o si está marcado como eliminado.
   Future<PublicationRecord?> readPublication(String id) async {
     try {
       final file = await _fileForId(id);
@@ -117,12 +119,12 @@ class PublicationsRepository {
       }
       return null;
     } catch (e) {
-      print('[PublicationsRepository] readPublication($id) error: $e');
+      debugPrint('[PublicationsRepository] readPublication($id) error: $e');
       return null;
     }
   }
 
-  // borra un post, dependiendo de markOnly: true lo marca como eliminado, false lo borra fisicamente
+
   Future<bool> deletePublication(String id, {bool markOnly = true}) async {
     try {
       final file = await _fileForId(id);
@@ -131,18 +133,21 @@ class PublicationsRepository {
       if (markOnly) {
         try {
           final content = await file.readAsString();
-          final dynamic data = content.trim().isEmpty ? <String, dynamic>{} : jsonDecode(content);
+          final dynamic data =
+              content.trim().isEmpty ? <String, dynamic>{} : jsonDecode(content);
           if (data is Map<String, dynamic>) {
             data['eliminada'] = true;
             await file.writeAsString(jsonEncode(data), flush: true);
             return true;
           } else {
-            // contenido inesperado: sobrescribir con marca simple
-            await file.writeAsString(jsonEncode({'id': id, 'eliminada': true}), flush: true);
+            await file.writeAsString(
+              jsonEncode({'id': id, 'eliminada': true}),
+              flush: true,
+            );
             return true;
           }
         } catch (e) {
-          print('[PublicationsRepository] deletePublication mark error for $id: $e');
+          debugPrint('[PublicationsRepository] deletePublication mark error for $id: $e');
           return false;
         }
       } else {
@@ -150,12 +155,12 @@ class PublicationsRepository {
         return true;
       }
     } catch (e) {
-      print('[PublicationsRepository] deletePublication($id) error: $e');
+      debugPrint('[PublicationsRepository] deletePublication($id) error: $e');
       return false;
     }
   }
 
-  /// ruta del directorio de publicaciones por si acaso
+  /// Ruta del directorio de publicaciones
   Future<String> debugDirPath() async {
     try {
       final d = await _resolvePublicDir();
