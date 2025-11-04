@@ -1,8 +1,8 @@
-# Sprint 1 — Visión (corta)
+# Sprint 1 — Visión 
 
-**Visión:** Entregar una aplicacion navegable que permita **crear y seleccionar perfiles desde una lista** (sin autenticación) y **publicar/listar objetos perdidos** con **persistencia en archivos `.txt`**, demostrando el flujo básico de la aplicación de punta a punta.
+**Visión:** Entregar una aplicacion navegable que permita **crear y seleccionar perfiles desde una lista** (sin autenticación) y **publicar/listar objetos perdidos** con **persistencia en archivos**, demostrando el flujo básico de la aplicación de punta a punta.
 
-## Alcance del Sprint (solo 2 historias)
+## Alcance del Sprint 
 - **US-01 (Must, 12 h, Dificultad 3):** Creación y selección de perfiles sin contraseña.
 - **US-02 (Must, 10 h, Dificultad 5):** Publicar y listar objetos perdidos con persistencia en archivos 
 
