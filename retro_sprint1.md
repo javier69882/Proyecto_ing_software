@@ -25,3 +25,6 @@ Tareas dependientes de otras tareas aún por realizarse/por hacerse en paralelo.
 
 ### ¿Qué deberiamos seguir haciendo?
 Seguir desglosando las historias de usuario en múltiples tareas detalladas que la conforman.
+
+### Comrpomiso de mejora
+Para el próximo sprint, nos comprometemos a establecer horarios fijos para las reuniones diarias, reducir las reuniones improvisadas y aplicar herramientas Scrum para estructurar mejor las sesiones. Además, evitaremos tareas dependientes entre sí sin haber terminado las previas y asignaremos tareas interdependientes al mismo desarrollador cuando sea posible.
