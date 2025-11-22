@@ -1,0 +1,1 @@
+{"id":"1762130169973541","titulo":"Cargador blanco perdido","descripcion":"Se me perdio un cargador xiaomi de tablet redmi, en la sala de estudio.","categoria":"Varios","fechaIso":"2025-11-02T00:00:00.000","lugar":"Sistemas","autorId":"1761534184726781","autorNombre":"javier"}

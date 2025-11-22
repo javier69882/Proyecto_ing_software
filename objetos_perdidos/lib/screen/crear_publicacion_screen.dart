@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:objetos_perdidos/Datos/repositories/profiles_repository.dart';
 import 'package:objetos_perdidos/Datos/repositories/publications_repository.dart';
 import 'package:objetos_perdidos/ui/profile_selector.dart' show ProfileScope;
+import 'package:objetos_perdidos/Datos/categorias.dart';
 
 class CrearPublicacionScreen extends StatefulWidget {
   final ProfilesRepository profilesRepo;
@@ -29,7 +30,7 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
   DateTime? _fecha;
   bool _guardando = false;
 
-  static const _categorias = ['Electrónica', 'Ropa', 'Documentos', 'Varios'];
+  // Lista centralizada: usar kCategorias de Datos/categorias.dart
 
   @override
   void dispose() {
@@ -69,7 +70,7 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
       await widget.publicationsRepo.createPublication(
         titulo: _tituloCtrl.text.trim(),
         descripcion: _descripcionCtrl.text.trim(),
-        categoria: _categoria ?? 'Varios',
+        categoria: normalizarCategoria(_categoria),
         fecha: _fecha ?? DateTime.now(),
         lugar: _lugarCtrl.text.trim(),
         autorId: persona.usuario,
@@ -125,12 +126,12 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              initialValue: _categoria,
+              value: _categoria,
               decoration: const InputDecoration(
                 labelText: 'Categoría',
                 border: OutlineInputBorder(),
               ),
-              items: _categorias
+              items: kCategorias
                   .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                   .toList(),
               onChanged: (v) => setState(() => _categoria = v),

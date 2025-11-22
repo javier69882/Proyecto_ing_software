@@ -1,5 +1,7 @@
-import 'persona.dart';
+import 'perfil.dart';
+import 'objeto_perdido.dart';
 
-class Admin extends Persona {
-  Admin(super.usuario);
+/// Clase de administrador que hereda de Perfil y fuerza `isAdmin = true`.
+class Admin extends Perfil {
+  Admin(String usuario) : super(usuario, 0, <ObjetoPerdido>[], isAdmin: true);
 }

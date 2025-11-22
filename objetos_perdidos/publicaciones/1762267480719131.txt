@@ -1,0 +1,1 @@
+{"id":"1762267480719131","titulo":"reloj perdido","descripcion":"reloj plateado","categoria":"Varios","fechaIso":"2025-10-09T00:00:00.000","lugar":"sala tm 3 1","autorId":"Javier Argomedo","autorNombre":"Javier Argomedo"}

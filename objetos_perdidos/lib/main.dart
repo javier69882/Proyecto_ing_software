@@ -7,6 +7,11 @@ import 'package:objetos_perdidos/Datos/models/publication_record.dart';
 import 'package:objetos_perdidos/ui/profile_selector.dart';
 import 'package:objetos_perdidos/admin.dart';
 import 'package:objetos_perdidos/ui/publicaciones_feed.dart';
+import 'package:objetos_perdidos/Datos/repositories/informes_repository.dart';
+import 'package:objetos_perdidos/screen/crear_informe_entrega_screen.dart';
+import 'package:objetos_perdidos/informe.dart';
+import 'package:objetos_perdidos/perfil.dart';
+import 'package:objetos_perdidos/screen/listar_informes_screen.dart';
 
 void main() {
   final controller = ProfileController(repo: ProfilesRepository());
@@ -41,6 +46,7 @@ class DemoHome extends StatefulWidget {
 class _DemoHomeState extends State<DemoHome> {
   String? _ultimaRuta;
   final _pubRepo = PublicationsRepository();
+  final _informesRepo = InformesRepository();
   List<PublicationRecord> _publicaciones = [];
 
   @override
@@ -144,6 +150,58 @@ class _DemoHomeState extends State<DemoHome> {
               icon: const Icon(Icons.publish),
               label: const Text('Crear publicación'),
             ),
+            const SizedBox(height: 12),
+
+            // Crear informe de entrega (solo admin)
+            Builder(builder: (ctx) {
+              final perfilCtrl2 = ProfileScope.of(ctx);
+              final persona = perfilCtrl2.current;
+              final esAdmin = persona is Perfil && persona.isAdmin;
+              if (!esAdmin) return const SizedBox.shrink();
+              return ElevatedButton.icon(
+                onPressed: () async {
+                  final informe = await Navigator.push<Informe>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CrearInformeEntregaScreen(
+                        admin: persona,
+                        repository: _informesRepo,
+                      ),
+                    ),
+                  );
+                  if (informe != null && mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Informe creado: ${informe.titulo}')),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.assignment_add),
+                label: const Text('Crear informe de entrega'),
+              );
+            }),
+            const SizedBox(height: 12),
+            // Ver informes de entrega (solo admin)
+            Builder(builder: (ctx) {
+              final perfilCtrl2 = ProfileScope.of(ctx);
+              final persona = perfilCtrl2.current;
+              final esAdmin = persona is Perfil && persona.isAdmin;
+              if (!esAdmin) return const SizedBox.shrink();
+              return ElevatedButton.icon(
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ListarInformesScreen(
+                        repository: _informesRepo,
+                        admin: persona,
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.assignment),
+                label: const Text('Ver informes de entrega'),
+              );
+            }),
             const SizedBox(height: 12),
 
             // Ver feed con filtros

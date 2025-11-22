@@ -1,1 +1,1 @@
-{"id":"1762221302544947","titulo":"da","descripcion":"ads","categoria":"Ropa","fechaIso":"2025-11-03T00:00:00.000","lugar":"da","autorId":"javier","autorNombre":"javier"}
+{"id":"1762221302544947","titulo":"da","descripcion":"ads","categoria":"Ropa","fechaIso":"2025-11-03T00:00:00.000","lugar":"da","autorId":"javier","autorNombre":"javier","eliminada":true}
