@@ -1,0 +1,7 @@
+ID: INF-RET-20251124-165130704
+ObjetoId: OBJ-20251124-160927-1764011367551671
+UsuarioId: javier
+Titulo: Retiro de Electrónica
+NotaTexto: Se verifico su identidad con su carnet
+NotaHora: 2025-11-24T16:51:30.704783
+RetiradoPor: Juan

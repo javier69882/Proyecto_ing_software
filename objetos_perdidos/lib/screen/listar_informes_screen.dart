@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 import '../Datos/repositories/informes_repository.dart';
 import '../informe.dart';
 import '../perfil.dart';
+import 'crear_informe_retiro_screen.dart';
 
 class ListarInformesScreen extends StatefulWidget {
   final InformesRepository repository;
   final Perfil admin;
-  const ListarInformesScreen({super.key, required this.repository, required this.admin});
+  const ListarInformesScreen({
+    super.key,
+    required this.repository,
+    required this.admin,
+  });
 
   @override
   State<ListarInformesScreen> createState() => _ListarInformesScreenState();
@@ -24,16 +29,26 @@ class _ListarInformesScreenState extends State<ListarInformesScreen> {
   }
 
   Future<void> _cargar() async {
-    setState(() { _cargando = true; _error = null; });
+    setState(() {
+      _cargando = true;
+      _error = null;
+    });
     try {
       final informes = await widget.repository.listInformes((usuario) {
         // Reconstruye un perfil simple; marca admin si coincide con admin actual
-        return Perfil(usuario, 0, const [], isAdmin: usuario == widget.admin.usuario);
+        return Perfil(
+          usuario,
+          0,
+          const [],
+          isAdmin: usuario == widget.admin.usuario,
+        );
       });
       if (!mounted) return;
       setState(() {
-        _informes = informes.where((i) => i.tipo == 'entrega').toList()
-          ..sort((a,b)=> b.fechaCreacion.compareTo(a.fechaCreacion));
+        _informes = informes
+            .where((i) => i.tipo == 'entrega')
+            .toList()
+          ..sort((a, b) => b.fechaCreacion.compareTo(a.fechaCreacion));
       });
     } catch (e) {
       if (!mounted) return;
@@ -62,7 +77,7 @@ class _ListarInformesScreenState extends State<ListarInformesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Informes de Entrega'),
+        title: const Text('Informes de entrega'),
         actions: [
           IconButton(
             tooltip: 'Ruta carpeta informes',
@@ -94,31 +109,86 @@ class _ListarInformesScreenState extends State<ListarInformesScreen> {
                       separatorBuilder: (_, __) => const Divider(),
                       itemBuilder: (_, i) {
                         final inf = _informes[i];
-                        final fechaStr = inf.fechaCreacion.toLocal().toString().split(' ').first;
-                        final entrega = inf is InformeEntrega ? inf.entregadoPorUsuario : '';
+                        final fechaStr = inf.fechaCreacion
+                            .toLocal()
+                            .toString()
+                            .split(' ')
+                            .first;
+                        final entrega = inf is InformeEntrega
+                            ? inf.entregadoPorUsuario
+                            : '';
+
                         return ListTile(
                           title: Text(inf.titulo),
-                          subtitle: Text('Categoría: ${inf.objeto.categoria}\nFecha: $fechaStr\nEntregado por: $entrega'),
+                          subtitle: Text(
+                            'Categoría: ${inf.objeto.categoria}\n'
+                            'Fecha: $fechaStr\n'
+                            'Entregado por: $entrega',
+                          ),
                           isThreeLine: true,
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete_outline),
-                            tooltip: 'Eliminar informe',
-                            onPressed: () async {
-                              final confirm = await showDialog<bool>(
-                                context: context,
-                                builder: (_) => AlertDialog(
-                                  title: const Text('Eliminar informe'),
-                                  content: const Text('¿Confirmas eliminar este informe?'),
-                                  actions: [
-                                    TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-                                    TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Eliminar')),
-                                  ],
-                                ),
-                              );
-                              if (confirm == true) {
-                                await _eliminar(inf);
-                              }
-                            },
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Botón para registrar retiro
+                              IconButton(
+                                icon: const Icon(Icons.assignment_turned_in),
+                                tooltip: 'Registrar retiro',
+                                onPressed: () async {
+                                  final creado =
+                                      await Navigator.push<bool>(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => CrearInformeRetiroScreen(
+                                        admin: widget.admin,
+                                        objeto: inf.objeto,
+                                      ),
+                                    ),
+                                  );
+                                  if (creado == true && mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Informe de retiro creado para ${inf.objeto.categoria}',
+                                        ),
+                                      ),
+                                    );
+                                    // Recargar lista para que desaparezca de "entrega"
+                                    await _cargar();
+                                  }
+                                },
+                              ),
+                              // Botón de eliminar informe
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline),
+                                tooltip: 'Eliminar informe',
+                                onPressed: () async {
+                                  final confirm =
+                                      await showDialog<bool>(
+                                    context: context,
+                                    builder: (_) => AlertDialog(
+                                      title: const Text('Eliminar informe'),
+                                      content: const Text(
+                                          '¿Confirmas eliminar este informe?'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, false),
+                                          child: const Text('Cancelar'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, true),
+                                          child: const Text('Eliminar'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirm == true) {
+                                    await _eliminar(inf);
+                                  }
+                                },
+                              ),
+                            ],
                           ),
                         );
                       },

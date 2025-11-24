@@ -5,7 +5,6 @@ import 'package:objetos_perdidos/Datos/repositories/profiles_repository.dart';
 class CrearPerfilScreen extends StatefulWidget {
   final ProfilesRepository repo;
 
-  // ❌ No uses const aquí porque instanciamos ProfilesRepository() (no es const)
   CrearPerfilScreen({super.key, ProfilesRepository? repository})
       : repo = repository ?? ProfilesRepository();
 

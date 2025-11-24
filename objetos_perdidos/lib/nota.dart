@@ -3,6 +3,7 @@ class Nota {
   DateTime hora;
 
   Nota(this.texto, this.hora);
+  factory Nota.ahora(String texto) => Nota(texto, DateTime.now());
 
   Map<String, dynamic> toJson() => {
         'texto': texto,

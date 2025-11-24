@@ -1,0 +1,7 @@
+ID: INF-RET-20251124-153142352
+ObjetoId: OBJ-20251122-000434-1763780674824684
+UsuarioId: javier
+Titulo: Retiro de Ropa
+NotaTexto: Su publicación de objeto perdido coincide con el objeto entregado como encontrado. Se verifico su identidad con la TNE
+NotaHora: 2025-11-24T15:31:42.352168
+RetiradoPor: Vicente

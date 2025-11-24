@@ -8,7 +8,7 @@ class ProfilesRepository {
 
   static String get _sep => Platform.pathSeparator;
 
-  /// Encuentra la RAÍZ del proyecto buscando 'pubspec.yaml' hacia arriba
+  /// Encuentra la raíz del proyecto buscando 'pubspec.yaml' hacia arriba
   
   Future<Directory> _findProjectRoot() async {
     if (_overrideBaseDir != null) return _overrideBaseDir;

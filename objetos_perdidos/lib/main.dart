@@ -12,6 +12,8 @@ import 'package:objetos_perdidos/screen/crear_informe_entrega_screen.dart';
 import 'package:objetos_perdidos/informe.dart';
 import 'package:objetos_perdidos/perfil.dart';
 import 'package:objetos_perdidos/screen/listar_informes_screen.dart';
+import 'package:objetos_perdidos/screen/listar_informes_retiro_screen.dart';
+
 
 void main() {
   final controller = ProfileController(repo: ProfilesRepository());
@@ -203,6 +205,31 @@ class _DemoHomeState extends State<DemoHome> {
               );
             }),
             const SizedBox(height: 12),
+
+            // Ver informes de retiro (solo admin)
+            Builder(builder: (ctx) {
+              final perfilCtrl2 = ProfileScope.of(ctx);
+              final persona = perfilCtrl2.current;
+              final esAdmin = persona is Perfil && persona.isAdmin;
+              if (!esAdmin) return const SizedBox.shrink();
+              return ElevatedButton.icon(
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ListarInformesRetiroScreen(
+                        repository: _informesRepo,
+                        admin: persona,
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.assignment_turned_in),
+                label: const Text('Ver informes de retiro'),
+              );
+            }),
+            const SizedBox(height: 12),
+
 
             // Ver feed con filtros
             ElevatedButton.icon(
