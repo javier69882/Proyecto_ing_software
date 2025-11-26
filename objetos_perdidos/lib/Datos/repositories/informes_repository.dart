@@ -4,6 +4,8 @@ import '../../informe.dart';
 import '../../perfil.dart';
 import '../../objeto_perdido.dart';
 import '../../nota.dart';
+import 'profiles_repository.dart';
+import '../models/profile_record.dart';
 
 // Repositorio para persistir informes en el sistema de archivos
 class InformesRepository {
@@ -11,6 +13,9 @@ class InformesRepository {
 
   InformesRepository({Directory? baseDirectory})
       : _overrideBaseDir = baseDirectory;
+
+  // puntos que se otorgan al entregador cuando el objeto es retirado
+  static const int kPuntosPorEntrega = 10;
 
   static String get _sep => Platform.pathSeparator;
 
@@ -136,6 +141,18 @@ class InformesRepository {
       throw ArgumentError('usuarioId (admin actual) es obligatorio');
     }
 
+    // validar que retiradoPorUsuario no sea administrador registrado
+    final profilesRepo = ProfilesRepository(baseDirectory: _overrideBaseDir);
+    try {
+      final all = await profilesRepo.listProfiles();
+      final matchAdmin = all.any((p) => p.nombre == retiradoPorUsuario && p.tipo == Tipo.admin);
+      if (matchAdmin) {
+        throw ArgumentError('Un administrador no puede ser la persona que retira el objeto');
+      }
+    } catch (_) {
+      // si hay error leyendo perfiles, sigue
+    }
+
     final id = _generateRetiroId();
     final nota = Nota.ahora(notaTrim);
 
@@ -162,8 +179,38 @@ class InformesRepository {
     final file = await _fileForRetiroId(id);
     await file.writeAsString(buffer.toString(), flush: true);
 
-    // eliminar informes de entrega asociados a este objeto
-    await _deleteInformesEntregaPorObjetoId(objetoId);
+    // intentar encontrar informe de entrega asociado y premiar entregador
+    try {
+      final dir = await _resolveInformesDir();
+      final files = await dir.list().toList();
+      for (final f in files) {
+        if (f is! File || !f.path.toLowerCase().endsWith('.json')) continue;
+        try {
+          final content = await f.readAsString();
+          if (content.trim().isEmpty) continue;
+          final dynamic data = jsonDecode(content);
+          if (data is! Map<String, dynamic>) continue;
+          final tipo = data['tipo'] as String? ?? '';
+          if (tipo != 'entrega') continue;
+          final objetoJson = data['objeto'];
+          if (objetoJson is! Map<String, dynamic>) continue;
+          final idJson = objetoJson['id'] as String?;
+          if (idJson == objetoId) {
+            final entregadoPor = (data['entregadoPor'] as String?) ?? '';
+            if (entregadoPor.isNotEmpty) {
+              // sumar puntos al entregador (si es perfil común)
+              await profilesRepo.addPointsForNombre(entregadoPor, kPuntosPorEntrega);
+            }
+            // borrar el informe de entrega vinculado
+            await f.delete();
+          }
+        } catch (e) {
+          print('[InformesRepository] error processing associated entrega for objetoId=$objetoId: $e');
+        }
+      }
+    } catch (e) {
+      print('[InformesRepository] _awardAndDeleteEntrega error: $e');
+    }
 
     return informe;
   }

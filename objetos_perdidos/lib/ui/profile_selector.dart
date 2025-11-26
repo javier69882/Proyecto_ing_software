@@ -116,9 +116,10 @@ class _ProfileSelectorPageState extends State<ProfileSelectorPage> {
             itemBuilder: (context, i) {
               final r = items[i];
               final tipoStr = r.tipo == Tipo.admin ? 'Admin' : 'Perfil';
+              final subtitle = r.tipo == Tipo.admin ? tipoStr : '$tipoStr • ${r.puntos} pts';
               return ListTile(
                 title: Text(r.nombre),
-                subtitle: Text(tipoStr),
+                subtitle: Text(subtitle),
                 leading: Icon(
                   r.tipo == Tipo.admin
                       ? Icons.verified_user

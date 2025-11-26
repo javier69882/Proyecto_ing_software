@@ -3,12 +3,21 @@ import '../perfil.dart';
 import '../Datos/repositories/informes_repository.dart';
 import '../informe.dart';
 import '../Datos/categorias.dart';
+import 'package:objetos_perdidos/Datos/repositories/profiles_repository.dart';
+import 'package:objetos_perdidos/Datos/models/profile_record.dart';
 
 class CrearInformeEntregaScreen extends StatefulWidget {
+  final InformesRepository repo;
   final Perfil admin;
-  final InformesRepository repository;
+  final ProfilesRepository profilesRepo;
 
-  const CrearInformeEntregaScreen({super.key, required this.admin, required this.repository});
+  CrearInformeEntregaScreen({
+    super.key,
+    required this.admin,
+    InformesRepository? repository,
+    ProfilesRepository? profilesRepository,
+  })  : repo = repository ?? InformesRepository(),
+        profilesRepo = profilesRepository ?? ProfilesRepository();
 
   @override
   State<CrearInformeEntregaScreen> createState() => _CrearInformeEntregaScreenState();
@@ -20,16 +29,34 @@ class _CrearInformeEntregaScreenState extends State<CrearInformeEntregaScreen> {
   String? _categoriaSeleccionada;
   final _descripcionCtrl = TextEditingController();
   final _lugarCtrl = TextEditingController();
-  final _entregadoPorCtrl = TextEditingController();
+  String? _selectedEntregadoPor;
   bool _saving = false;
   String? _error;
+
+  List<ProfileRecord> _profiles = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfiles();
+  }
+
+  Future<void> _loadProfiles() async {
+    try {
+      final list = await widget.profilesRepo.listProfiles();
+      if (!mounted) return;
+      setState(() {
+        // sólo perfiles comunes
+        _profiles = list.where((p) => p.tipo == Tipo.perfil).toList();
+      });
+    } catch (_) {}
+  }
 
   @override
   void dispose() {
     _tituloCtrl.dispose();
     _descripcionCtrl.dispose();
     _lugarCtrl.dispose();
-    _entregadoPorCtrl.dispose();
     super.dispose();
   }
 
@@ -39,15 +66,19 @@ class _CrearInformeEntregaScreenState extends State<CrearInformeEntregaScreen> {
       return;
     }
     if (!_formKey.currentState!.validate()) return;
+    if (_selectedEntregadoPor == null || _selectedEntregadoPor!.isEmpty) {
+      setState(() => _error = 'Debes seleccionar la persona que entregó el objeto');
+      return;
+    }
     setState(() { _saving = true; _error = null; });
     try {
-      final Informe informe = await widget.repository.createInformeEntrega(
+      final Informe informe = await widget.repo.createInformeEntrega(
         admin: widget.admin,
         titulo: _tituloCtrl.text.trim(),
         categoria: _categoriaSeleccionada ?? kCategorias.first,
         descripcion: _descripcionCtrl.text.trim(),
         lugar: _lugarCtrl.text.trim(),
-        entregadoPorUsuario: _entregadoPorCtrl.text.trim(),
+        entregadoPorUsuario: _selectedEntregadoPor!,
       );
       if (!mounted) return;
       Navigator.of(context).pop(informe);
@@ -93,10 +124,13 @@ class _CrearInformeEntregaScreenState extends State<CrearInformeEntregaScreen> {
                 decoration: const InputDecoration(labelText: 'Lugar donde se encontró'),
                 validator: (v) => (v == null || v.trim().isEmpty) ? 'Lugar requerido' : null,
               ),
-              TextFormField(
-                controller: _entregadoPorCtrl,
-                decoration: const InputDecoration(labelText: 'Usuario que entrega'),
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Usuario requerido' : null,
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: _selectedEntregadoPor,
+                decoration: const InputDecoration(labelText: 'Persona que entregó (perfil)'),
+                items: _profiles.map((p) => DropdownMenuItem(value: p.nombre, child: Text('${p.nombre} (${p.puntos} pts)'))).toList(),
+                onChanged: (v) => setState(() => _selectedEntregadoPor = v),
+                validator: (v) => (v == null || v.isEmpty) ? 'Selecciona una persona' : null,
               ),
               const SizedBox(height: 20),
               if (_error != null) Text(_error!, style: const TextStyle(color: Colors.red)),

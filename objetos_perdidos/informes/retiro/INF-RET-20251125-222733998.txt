@@ -1,0 +1,7 @@
+ID: INF-RET-20251125-222733998
+ObjetoId: OBJ-20251125-222715-1764120435860162
+UsuarioId: javier
+Titulo: Retiro de Documentos
+NotaTexto: asdasdasd
+NotaHora: 2025-11-25T22:27:33.998135
+RetiradoPor: asdasd

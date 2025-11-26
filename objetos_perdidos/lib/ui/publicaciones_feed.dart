@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:objetos_perdidos/Datos/models/publication_record.dart';
 import 'package:objetos_perdidos/Datos/repositories/publications_repository.dart';
 import 'package:objetos_perdidos/screen/crear_publicacion_screen.dart';
+import 'package:objetos_perdidos/ui/profile_selector.dart' show ProfileScope;
+import 'package:objetos_perdidos/perfil.dart' show Perfil;
 
 class PublicacionesFeedScreen extends StatefulWidget {
   final PublicationsRepository publicationsRepo;
@@ -185,6 +187,13 @@ class _PublicacionesFeedScreenState extends State<PublicacionesFeedScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final persona = ProfileScope.of(context).current;
+    final mostrarPuntos = persona is Perfil && !persona.isAdmin;
+    final puntos = mostrarPuntos ? (persona as Perfil).puntos : 0;
+
+    final isUserCommon = persona is Perfil && !persona.isAdmin;
+    final tabs = isUserCommon ? ['Todos', 'Mis Posts'] : ['Todos'];
+
     // Categorías dinámicas + "Todas"
     final categorias = <String>{
       'Todas',
@@ -197,169 +206,260 @@ class _PublicacionesFeedScreenState extends State<PublicacionesFeedScreen> {
         ? '${_desde != null ? _fmt(_desde!) : '...'} → ${_hasta != null ? _fmt(_hasta!) : '...'}'
         : 'Rango de fechas';
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Objetos perdidos'),
-        actions: [
-          // Orden
-          PopupMenuButton<String>(
-            tooltip: 'Ordenar',
-            initialValue: _orden,
-            onSelected: (v) => setState(() {
-              _orden = v;
-              _aplicarFiltros();
-            }),
-            itemBuilder: (context) => const [
-              PopupMenuItem(value: 'creationDesc', child: Text('Más nuevos (creación)')),
-              PopupMenuItem(value: 'fechaDesc', child: Text('Más recientes (fecha objeto)')),
-              PopupMenuItem(value: 'creationAsc', child: Text('Más antiguos (creación)')),
-              PopupMenuItem(value: 'fechaAsc', child: Text('Más antiguos (fecha objeto)')),
-            ],
-            icon: const Icon(Icons.sort),
-          ),
-          IconButton(
-            tooltip: 'Limpiar filtros',
-            onPressed: _limpiarFiltros,
-            icon: const Icon(Icons.filter_alt_off),
-          ),
-          IconButton(
-            tooltip: 'Recargar',
-            onPressed: _cargando ? null : _cargar,
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(56),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-            child: TextField(
-              controller: _searchCtrl,
-              onChanged: (t) => setState(() {
-                _query = t;
+    return DefaultTabController(
+      length: tabs.length,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Objetos perdidos'),
+          actions: [
+            if (mostrarPuntos)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Chip(
+                  visualDensity: VisualDensity.compact,
+                  avatar: const Icon(Icons.star, size: 16),
+                  label: Text('$puntos pts'),
+                ),
+              ),
+            // Orden
+            PopupMenuButton<String>(
+              tooltip: 'Ordenar',
+              initialValue: _orden,
+              onSelected: (v) => setState(() {
+                _orden = v;
                 _aplicarFiltros();
               }),
-              decoration: InputDecoration(
-                hintText: 'Buscar por título, descripción, lugar o autor…',
-                prefixIcon: const Icon(Icons.search),
-                isDense: true,
-                filled: true,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                suffixIcon: _query.isEmpty
-                    ? null
-                    : IconButton(
-                        tooltip: 'Limpiar búsqueda',
-                        onPressed: () => setState(() {
-                          _searchCtrl.clear();
-                          _query = '';
-                          _aplicarFiltros();
-                        }),
-                        icon: const Icon(Icons.clear),
-                      ),
+              itemBuilder: (context) => const [
+                PopupMenuItem(value: 'creationDesc', child: Text('Más nuevos (creación)')),
+                PopupMenuItem(value: 'fechaDesc', child: Text('Más recientes (fecha objeto)')),
+                PopupMenuItem(value: 'creationAsc', child: Text('Más antiguos (creación)')),
+                PopupMenuItem(value: 'fechaAsc', child: Text('Más antiguos (fecha objeto)')),
+              ],
+              icon: const Icon(Icons.sort),
+            ),
+            IconButton(
+              tooltip: 'Limpiar filtros',
+              onPressed: _limpiarFiltros,
+              icon: const Icon(Icons.filter_alt_off),
+            ),
+            IconButton(
+              tooltip: 'Recargar',
+              onPressed: _cargando ? null : _cargar,
+              icon: const Icon(Icons.refresh),
+            ),
+          ],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(56),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+              child: TextField(
+                controller: _searchCtrl,
+                onChanged: (t) => setState(() {
+                  _query = t;
+                  _aplicarFiltros();
+                }),
+                decoration: InputDecoration(
+                  hintText: 'Buscar por título, descripción, lugar o autor…',
+                  prefixIcon: const Icon(Icons.search),
+                  isDense: true,
+                  filled: true,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  suffixIcon: _query.isEmpty
+                      ? null
+                      : IconButton(
+                          tooltip: 'Limpiar búsqueda',
+                          onPressed: () => setState(() {
+                            _searchCtrl.clear();
+                            _query = '';
+                            _aplicarFiltros();
+                          }),
+                          icon: const Icon(Icons.clear),
+                        ),
+                ),
               ),
             ),
           ),
         ),
-      ),
-      body: Column(
-        children: [
-          // filtros
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-            child: Row(
-              children: [
-                // Categorías
-                ...categorias.map((c) {
-                  final selected = c.toLowerCase() == _categoria.toLowerCase();
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text(c),
-                      selected: selected,
-                      onSelected: (v) => setState(() {
-                        _categoria = c;
-                        _aplicarFiltros();
-                      }),
-                    ),
-                  );
-                }),
-                const SizedBox(width: 8),
-                // Rango de fechas
-                OutlinedButton.icon(
-                  onPressed: _pickRangoFechas,
-                  icon: const Icon(Icons.date_range),
-                  label: Text(rangoSel, overflow: TextOverflow.ellipsis),
-                ),
-                if (_desde != null || _hasta != null)
-                  Padding(
-                    padding: const EdgeInsets.only(left: 4),
-                    child: IconButton(
-                      tooltip: 'Quitar rango',
-                      onPressed: () => setState(() {
-                        _desde = null;
-                        _hasta = null;
-                        _aplicarFiltros();
-                      }),
-                      icon: const Icon(Icons.close),
-                    ),
+        body: Column(
+          children: [
+            // filtros
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+              child: Row(
+                children: [
+                  // Categorías
+                  ...categorias.map((c) {
+                    final selected = c.toLowerCase() == _categoria.toLowerCase();
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(c),
+                        selected: selected,
+                        onSelected: (v) => setState(() {
+                          _categoria = c;
+                          _aplicarFiltros();
+                        }),
+                      ),
+                    );
+                  }),
+                  const SizedBox(width: 8),
+                  // Rango de fechas
+                  OutlinedButton.icon(
+                    onPressed: _pickRangoFechas,
+                    icon: const Icon(Icons.date_range),
+                    label: Text(rangoSel, overflow: TextOverflow.ellipsis),
                   ),
-              ],
-            ),
-          ),
-          const Divider(height: 0),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: _refrescar,
-              child: _cargando
-                  ? ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      children: const [
-                        SizedBox(height: 160),
-                        Center(child: CircularProgressIndicator()),
-                      ],
-                    )
-                  : _filtrados.isEmpty
-                      ? ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          children: const [
-                            SizedBox(height: 120),
-                            Icon(Icons.inventory_2_outlined,
-                                size: 56, color: Colors.grey),
-                            SizedBox(height: 12),
-                            Center(
-                              child: Text('Sin resultados',
-                                  style: TextStyle(color: Colors.grey)),
-                            ),
-                          ],
-                        )
-                      : ListView.separated(
-                          padding: const EdgeInsets.all(12),
-                          itemCount: _filtrados.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 8),
-                          itemBuilder: (context, index) {
-                            final pub = _filtrados[index];
-                            return _PublicationCard(pub: pub);
-                          },
-                        ),
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          final ok = await Navigator.of(context).push<bool>(
-            MaterialPageRoute(
-              builder: (_) => CrearPublicacionScreen(
-                publicationsRepository: widget.publicationsRepo,
+                  if (_desde != null || _hasta != null)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4),
+                      child: IconButton(
+                        tooltip: 'Quitar rango',
+                        onPressed: () => setState(() {
+                          _desde = null;
+                          _hasta = null;
+                          _aplicarFiltros();
+                        }),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ),
+                ],
               ),
             ),
-          );
-          if (ok == true && mounted) _cargar();
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Publicar'),
+            const Divider(height: 0),
+            // TabBar (si aplica)
+            if (tabs.length > 1)
+              Material(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                child: TabBar(
+                  tabs: tabs.map((t) => Tab(text: t)).toList(),
+                  onTap: (_) {
+                    // nothing extra; TabBarView refleja la pestaña
+                  },
+                ),
+              ),
+            // Contenido por pestaña
+            Expanded(
+              child: TabBarView(
+                children: tabs.map((t) {
+                  final mostrarSoloMios = t == 'Mis Posts';
+                  final personaUsuario = persona?.usuario ?? '';
+                  final lista = mostrarSoloMios
+                      ? _filtrados.where((p) => p.autorNombre == personaUsuario).toList()
+                      : _filtrados;
+
+                  return RefreshIndicator(
+                    onRefresh: _refrescar,
+                    child: lista.isEmpty
+                        ? ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: [
+                              const SizedBox(height: 120),
+                              Icon(Icons.inventory_2_outlined, size: 56, color: Colors.grey),
+                              const SizedBox(height: 12),
+                              Center(child: Text(mostrarSoloMios ? 'No hay publicaciones tuyas' : 'Sin resultados', style: const TextStyle(color: Colors.grey))),
+                            ],
+                          )
+                        : ListView.separated(
+                            padding: const EdgeInsets.all(12),
+                            itemCount: lista.length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 8),
+                            itemBuilder: (context, index) {
+                              final pub = lista[index];
+                              // determinar permisos de borrado
+                              final puedeBorrar = persona is Perfil && ((persona as Perfil).isAdmin || persona.usuario == pub.autorNombre);
+                              return Card(
+                                elevation: 1.5,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                  leading: CircleAvatar(child: Text(pub.categoria.trim().isEmpty ? '?' : pub.categoria.trim()[0].toUpperCase())),
+                                  title: Text(pub.titulo, maxLines: 1, overflow: TextOverflow.ellipsis),
+                                  subtitle: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      if (pub.descripcion.isNotEmpty)
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 4.0),
+                                          child: Text(pub.descripcion, maxLines: 2, overflow: TextOverflow.ellipsis),
+                                        ),
+                                      const SizedBox(height: 6),
+                                      Wrap(
+                                        spacing: 8,
+                                        runSpacing: -6,
+                                        children: [
+                                          _Chip(icon: Icons.category, label: pub.categoria),
+                                          _Chip(icon: Icons.place, label: pub.lugar),
+                                          _Chip(icon: Icons.event, label: (() {
+                                            final dt = DateTime.tryParse(pub.fechaIso);
+                                            if (dt == null) return 'Fecha: —';
+                                            final y = dt.year.toString().padLeft(4, '0');
+                                            final m = dt.month.toString().padLeft(2, '0');
+                                            final d = dt.day.toString().padLeft(2, '0');
+                                            return '$y-$m-$d';
+                                          })()),
+                                          if (pub.autorNombre.isNotEmpty) _Chip(icon: Icons.person, label: pub.autorNombre),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  trailing: puedeBorrar
+                                      ? IconButton(
+                                          icon: const Icon(Icons.delete_outline),
+                                          tooltip: 'Eliminar publicación',
+                                          onPressed: () async {
+                                            final confirm = await showDialog<bool>(
+                                              context: context,
+                                              builder: (_) => AlertDialog(
+                                                title: const Text('Confirmar eliminación'),
+                                                content: const Text('¿Eliminar esta publicación?'),
+                                                actions: [
+                                                  TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancelar')),
+                                                  TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Eliminar')),
+                                                ],
+                                              ),
+                                            );
+                                            if (confirm == true) {
+                                              final ok = await widget.publicationsRepo.deletePublication(pub.id, markOnly: true);
+                                              if (!mounted) return;
+                                              if (ok) {
+                                                await _cargar();
+                                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Publicación eliminada')));
+                                              } else {
+                                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error eliminando publicación')));
+                                              }
+                                            }
+                                          },
+                                        )
+                                      : null,
+                                ),
+                              );
+                            },
+                          ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+        ),
+        floatingActionButton: (persona is Perfil && !persona.isAdmin)
+            ? FloatingActionButton.extended(
+                onPressed: () async {
+                  final ok = await Navigator.of(context).push<bool>(
+                    MaterialPageRoute(
+                      builder: (_) => CrearPublicacionScreen(
+                        publicationsRepository: widget.publicationsRepo,
+                      ),
+                    ),
+                  );
+                  if (ok == true && mounted) _cargar();
+                },
+                icon: const Icon(Icons.add),
+                label: const Text('Publicar'),
+              )
+            : null,
       ),
     );
   }

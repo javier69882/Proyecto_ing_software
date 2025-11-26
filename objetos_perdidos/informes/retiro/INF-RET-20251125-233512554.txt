@@ -1,0 +1,7 @@
+ID: INF-RET-20251125-233512554
+ObjetoId: OBJ-20251125-233455-1764124495622999
+UsuarioId: javier
+Titulo: Retiro de Otros
+NotaTexto: dwdwas
+NotaHora: 2025-11-25T23:35:12.554178
+RetiradoPor: sdaw

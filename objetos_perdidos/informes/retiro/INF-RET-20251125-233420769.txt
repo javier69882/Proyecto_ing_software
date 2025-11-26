@@ -1,0 +1,7 @@
+ID: INF-RET-20251125-233420769
+ObjetoId: OBJ-20251125-233402-1764124442945970
+UsuarioId: javier
+Titulo: Retiro de Otros
+NotaTexto: sdasdd
+NotaHora: 2025-11-25T23:34:20.769775
+RetiradoPor: pierluigi

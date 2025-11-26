@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:objetos_perdidos/Datos/repositories/profiles_repository.dart';
 import 'package:objetos_perdidos/Datos/repositories/publications_repository.dart';
 import 'package:objetos_perdidos/ui/profile_selector.dart' show ProfileScope;
+import 'package:objetos_perdidos/perfil.dart' show Perfil;
 import 'package:objetos_perdidos/Datos/categorias.dart';
 
 class CrearPublicacionScreen extends StatefulWidget {
@@ -46,7 +47,8 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
       context: context,
       initialDate: _fecha ?? now,
       firstDate: DateTime(now.year - 5),
-      lastDate: DateTime(now.year + 1),
+      // impedir seleccionar fechas futuras
+      lastDate: DateTime(now.year, now.month, now.day),
     );
     if (picked != null) {
       setState(() => _fecha = DateTime(picked.year, picked.month, picked.day));
@@ -63,6 +65,14 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
       if (persona == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No hay perfil seleccionado. Selecciona un perfil primero.')),
+        );
+        return;
+      }
+
+      // prevenir que admins creen publicaciones
+      if (persona is Perfil && persona.isAdmin) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Los administradores no pueden crear publicaciones.')),
         );
         return;
       }

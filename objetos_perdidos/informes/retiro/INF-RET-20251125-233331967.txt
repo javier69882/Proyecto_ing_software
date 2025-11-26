@@ -1,0 +1,7 @@
+ID: INF-RET-20251125-233331967
+ObjetoId: OBJ-20251125-233313-1764124393050121
+UsuarioId: Javier Argomedo Georgi
+Titulo: Retiro de Otros
+NotaTexto: se verifico etc
+NotaHora: 2025-11-25T23:33:31.967722
+RetiradoPor: javier vidal

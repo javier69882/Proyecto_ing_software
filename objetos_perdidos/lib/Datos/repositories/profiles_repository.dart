@@ -71,6 +71,7 @@ class ProfilesRepository {
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       nombre: nombre,
       tipo: tipo,
+      puntos: 0,
     );
 
     try {
@@ -87,6 +88,30 @@ class ProfilesRepository {
     } catch (e) {
       print('[ProfilesRepository] createProfile error: $e');
       rethrow;
+    }
+  }
+
+  // Añade (o resta) puntos al perfil con el nombre dado.
+  Future<bool> addPointsForNombre(String nombre, int delta) async {
+    try {
+      final file = await _resolveFile();
+      final current = await listProfiles();
+      var changed = false;
+      final updated = current.map((r) {
+        if (r.nombre == nombre && r.tipo == Tipo.perfil) {
+          final nuevo = r.copyWith(puntos: r.puntos + delta);
+          changed = true;
+          return nuevo;
+        }
+        return r;
+      }).toList();
+      if (changed) {
+        await file.writeAsString(ProfileRecord.encodeList(updated), flush: true);
+      }
+      return changed;
+    } catch (e) {
+      print('[ProfilesRepository] addPointsForNombre error: $e');
+      return false;
     }
   }
 

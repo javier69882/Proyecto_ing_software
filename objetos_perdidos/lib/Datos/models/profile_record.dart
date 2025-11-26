@@ -25,17 +25,20 @@ class ProfileRecord {
   final String id;
   final String nombre;
   final Tipo tipo;
+  final int puntos;
 
   ProfileRecord({
     required this.id,
     required this.nombre,
     required this.tipo,
+    this.puntos = 0,
   });
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'nombre': nombre,
         'tipo': tipoToString(tipo),
+        'puntos': puntos,
       };
 
   factory ProfileRecord.fromJson(Map<String, dynamic> json) {
@@ -44,28 +47,29 @@ class ProfileRecord {
       id: (json['id'] as String?) ?? '',
       nombre: (json['nombre'] as String?) ?? '',
       tipo: tipoFromString(tipoStr),
+      puntos: (json['puntos'] is int)
+          ? (json['puntos'] as int)
+          : int.tryParse((json['puntos']?.toString() ?? '0')) ?? 0,
     );
   }
 
   /// Construye una instancia de dominio usando tus clases existentes.
-
-Persona toPersona() {
-  switch (tipo) {
-    case Tipo.admin:
-      return Admin(nombre);
-    case Tipo.perfil:
-    default:
-      // Lista tipada vacía para el constructor de Perfil
-      return Perfil(nombre, 0, <ObjetoPerdido>[]);
+  Persona toPersona() {
+    switch (tipo) {
+      case Tipo.admin:
+        return Admin(nombre);
+      case Tipo.perfil:
+      default:
+        return Perfil(nombre, puntos, <ObjetoPerdido>[]);
+    }
   }
-}
 
-
-  ProfileRecord copyWith({String? id, String? nombre, Tipo? tipo}) {
+  ProfileRecord copyWith({String? id, String? nombre, Tipo? tipo, int? puntos}) {
     return ProfileRecord(
       id: id ?? this.id,
       nombre: nombre ?? this.nombre,
       tipo: tipo ?? this.tipo,
+      puntos: puntos ?? this.puntos,
     );
   }
 
