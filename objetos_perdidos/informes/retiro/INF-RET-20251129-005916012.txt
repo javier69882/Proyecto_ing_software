@@ -1,0 +1,7 @@
+ID: INF-RET-20251129-005916012
+ObjetoId: OBJ-20251129-005819-1764388699117337
+UsuarioId: javier
+Titulo: Retiro de Ropa
+NotaTexto: se verifico todo
+NotaHora: 2025-11-29T00:59:16.012252
+RetiradoPor: el dueño

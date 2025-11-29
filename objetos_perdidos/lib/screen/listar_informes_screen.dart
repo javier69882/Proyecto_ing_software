@@ -7,10 +7,12 @@ import 'crear_informe_retiro_screen.dart';
 class ListarInformesScreen extends StatefulWidget {
   final InformesRepository repository;
   final Perfil admin;
+  final bool modoRegistroRetiro;
   const ListarInformesScreen({
     super.key,
     required this.repository,
     required this.admin,
+    this.modoRegistroRetiro = false,
   });
 
   @override
@@ -77,7 +79,7 @@ class _ListarInformesScreenState extends State<ListarInformesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Informes de entrega'),
+        title: Text(widget.modoRegistroRetiro ? 'Registrar retiro' : 'Informes de entrega'),
         actions: [
           IconButton(
             tooltip: 'Ruta carpeta informes',
@@ -102,96 +104,116 @@ class _ListarInformesScreenState extends State<ListarInformesScreen> {
           : _error != null
               ? Center(child: Text(_error!))
               : _informes.isEmpty
-                  ? const Center(child: Text('No hay informes de entrega'))
-                  : ListView.separated(
-                      padding: const EdgeInsets.all(12),
-                      itemCount: _informes.length,
-                      separatorBuilder: (_, __) => const Divider(),
-                      itemBuilder: (_, i) {
-                        final inf = _informes[i];
-                        final fechaStr = inf.fechaCreacion
-                            .toLocal()
-                            .toString()
-                            .split(' ')
-                            .first;
-                        final entrega = inf is InformeEntrega
-                            ? inf.entregadoPorUsuario
-                            : '';
+                  ? Center(
+                      child: Text(
+                        widget.modoRegistroRetiro
+                            ? 'No hay informes de entrega disponibles para registrar retiro'
+                            : 'No hay informes de entrega',
+                      ),
+                    )
+                  : Column(
+                      children: [
+                        if (widget.modoRegistroRetiro)
+                          const Padding(
+                            padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
+                            child: Text(
+                              'Selecciona una entrega y pulsa el icono de check para registrar el retiro.',
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        Expanded(
+                          child: ListView.separated(
+                            padding: const EdgeInsets.all(12),
+                            itemCount: _informes.length,
+                            separatorBuilder: (_, __) => const Divider(),
+                            itemBuilder: (_, i) {
+                              final inf = _informes[i];
+                              final fechaStr = inf.fechaCreacion
+                                  .toLocal()
+                                  .toString()
+                                  .split(' ')
+                                  .first;
+                              final entrega = inf is InformeEntrega
+                                  ? inf.entregadoPorUsuario
+                                  : '';
 
-                        return ListTile(
-                          title: Text(inf.titulo),
-                          subtitle: Text(
-                            'Categoría: ${inf.objeto.categoria}\n'
-                            'Fecha: $fechaStr\n'
-                            'Entregado por: $entrega',
-                          ),
-                          isThreeLine: true,
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Botón para registrar retiro
-                              IconButton(
-                                icon: const Icon(Icons.assignment_turned_in),
-                                tooltip: 'Registrar retiro',
-                                onPressed: () async {
-                                  final creado =
-                                      await Navigator.push<bool>(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => CrearInformeRetiroScreen(
-                                        admin: widget.admin,
-                                        objeto: inf.objeto,
-                                      ),
+                              return ListTile(
+                                title: Text(inf.titulo),
+                                subtitle: Text(
+                                  'Categoría: ${inf.objeto.categoria}\n'
+                                  'Fecha: $fechaStr\n'
+                                  'Entregado por: $entrega',
+                                ),
+                                isThreeLine: true,
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Botón para registrar retiro
+                                    IconButton(
+                                      icon: const Icon(Icons.assignment_turned_in),
+                                      tooltip: 'Registrar retiro',
+                                      onPressed: () async {
+                                        final creado =
+                                            await Navigator.push<bool>(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => CrearInformeRetiroScreen(
+                                              admin: widget.admin,
+                                              objeto: inf.objeto,
+                                            ),
+                                          ),
+                                        );
+                                        if (creado == true && mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Informe de retiro creado para ${inf.objeto.categoria}',
+                                              ),
+                                            ),
+                                          );
+                                          // Recargar lista para que desaparezca de "entrega"
+                                          await _cargar();
+                                        }
+                                      },
                                     ),
-                                  );
-                                  if (creado == true && mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Informe de retiro creado para ${inf.objeto.categoria}',
-                                        ),
+                                    if (!widget.modoRegistroRetiro)
+                                      IconButton(
+                                        icon: const Icon(Icons.delete_outline),
+                                        tooltip: 'Eliminar informe',
+                                        onPressed: () async {
+                                          final confirm =
+                                              await showDialog<bool>(
+                                            context: context,
+                                            builder: (_) => AlertDialog(
+                                              title: const Text('Eliminar informe'),
+                                              content: const Text(
+                                                  '¿Confirmas eliminar este informe?'),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(context, false),
+                                                  child: const Text('Cancelar'),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(context, true),
+                                                  child: const Text('Eliminar'),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                          if (confirm == true) {
+                                            await _eliminar(inf);
+                                          }
+                                        },
                                       ),
-                                    );
-                                    // Recargar lista para que desaparezca de "entrega"
-                                    await _cargar();
-                                  }
-                                },
-                              ),
-                              // Botón de eliminar informe
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline),
-                                tooltip: 'Eliminar informe',
-                                onPressed: () async {
-                                  final confirm =
-                                      await showDialog<bool>(
-                                    context: context,
-                                    builder: (_) => AlertDialog(
-                                      title: const Text('Eliminar informe'),
-                                      content: const Text(
-                                          '¿Confirmas eliminar este informe?'),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context, false),
-                                          child: const Text('Cancelar'),
-                                        ),
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context, true),
-                                          child: const Text('Eliminar'),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                  if (confirm == true) {
-                                    await _eliminar(inf);
-                                  }
-                                },
-                              ),
-                            ],
+                                  ],
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
+                        ),
+                      ],
                     ),
     );
   }

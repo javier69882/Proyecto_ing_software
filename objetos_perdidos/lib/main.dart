@@ -242,6 +242,34 @@ class _DemoHomeState extends State<DemoHome> {
               }),
               const SizedBox(height: 12),
 
+              // registrar informe de retiro (solo admin)
+              Builder(builder: (ctx) {
+                final perfilCtrl2 = ProfileScope.of(ctx);
+                final persona = perfilCtrl2.current;
+                final esAdmin = persona is Perfil && persona.isAdmin;
+                if (!esAdmin) return const SizedBox.shrink();
+                return SizedBox(
+                  width: 320,
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ListarInformesScreen(
+                            repository: _informesRepo,
+                            admin: persona,
+                            modoRegistroRetiro: true,
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.assignment_turned_in_outlined),
+                    label: const Text('Crear informe de retiro'),
+                  ),
+                );
+              }),
+              const SizedBox(height: 12),
+
               // ver informes de retiro (solo admin)
               Builder(builder: (ctx) {
                 final perfilCtrl2 = ProfileScope.of(ctx);
