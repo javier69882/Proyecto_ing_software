@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:objetos_perdidos/Datos/models/profile_record.dart';
 import 'package:objetos_perdidos/Datos/repositories/profiles_repository.dart';
+import 'package:objetos_perdidos/ui/profile_selector.dart';
 
 class CrearPerfilScreen extends StatefulWidget {
   final ProfilesRepository repo;
@@ -58,7 +59,19 @@ class _CrearPerfilScreenState extends State<CrearPerfilScreen> {
     final guardarHabilitado = _formValido;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Crear perfil')),
+      appBar: AppBar(
+        title: const Text('Crear perfil'),
+        actions: [
+          IconButton(
+            tooltip: 'Volver al inicio',
+            icon: const Icon(Icons.home),
+            onPressed: () {
+              ProfileScope.of(context).clear();
+              Navigator.of(context, rootNavigator: true).popUntil((r) => r.isFirst);
+            },
+          ),
+        ],
+      ),
       body: Form(
         key: _formKey,
         autovalidateMode: AutovalidateMode.onUserInteraction,

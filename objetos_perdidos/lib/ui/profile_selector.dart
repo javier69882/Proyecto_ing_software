@@ -92,6 +92,16 @@ class _ProfileSelectorPageState extends State<ProfileSelectorPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Seleccionar perfil'),
+        actions: [
+          IconButton(
+            tooltip: 'Volver al inicio',
+            icon: const Icon(Icons.home),
+            onPressed: () {
+              ProfileScope.of(context).clear();
+              Navigator.of(context, rootNavigator: true).popUntil((r) => r.isFirst);
+            },
+          ),
+        ],
       ),
       body: AnimatedBuilder(
         animation: controller,

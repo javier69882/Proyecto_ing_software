@@ -3,6 +3,7 @@ import '../Datos/repositories/informes_repository.dart';
 import '../informe.dart';
 import '../perfil.dart';
 import 'crear_informe_retiro_screen.dart';
+import '../ui/profile_selector.dart';
 
 class ListarInformesScreen extends StatefulWidget {
   final InformesRepository repository;
@@ -97,6 +98,14 @@ class _ListarInformesScreenState extends State<ListarInformesScreen> {
             icon: const Icon(Icons.refresh),
             onPressed: _cargar,
           ),
+          IconButton(
+            tooltip: 'Volver al inicio',
+            icon: const Icon(Icons.home),
+            onPressed: () {
+              ProfileScope.of(context).clear();
+              Navigator.of(context, rootNavigator: true).popUntil((route) => route.isFirst);
+            },
+          ),
         ],
       ),
       body: _cargando
@@ -133,16 +142,28 @@ class _ListarInformesScreenState extends State<ListarInformesScreen> {
                                   .toString()
                                   .split(' ')
                                   .first;
-                              final entrega = inf is InformeEntrega
+                              final esEntrega = inf is InformeEntrega;
+                              final entrega = esEntrega
                                   ? inf.entregadoPorUsuario
                                   : '';
+                              final retirado = esEntrega && inf.estaRetirado;
+                              final retiradoFecha = (esEntrega
+                                      ? inf.retiradoFecha
+                                      : null)
+                                  ?.toLocal()
+                                  .toString()
+                                  .split(' ')
+                                  .first;
 
                               return ListTile(
                                 title: Text(inf.titulo),
                                 subtitle: Text(
                                   'Categoría: ${inf.objeto.categoria}\n'
                                   'Fecha: $fechaStr\n'
-                                  'Entregado por: $entrega',
+                                  'Entregado por: $entrega\n'
+                                  'Estado: ${retirado ? 'Retirado' : 'Pendiente'}'
+                                  '${retirado && inf is InformeEntrega && inf.retiradoPor != null ? ' por ${inf.retiradoPor}' : ''}'
+                                  '${retiradoFecha != null ? ' el $retiradoFecha' : ''}',
                                 ),
                                 isThreeLine: true,
                                 trailing: Row(
@@ -151,30 +172,31 @@ class _ListarInformesScreenState extends State<ListarInformesScreen> {
                                     // Botón para registrar retiro
                                     IconButton(
                                       icon: const Icon(Icons.assignment_turned_in),
-                                      tooltip: 'Registrar retiro',
-                                      onPressed: () async {
-                                        final creado =
-                                            await Navigator.push<bool>(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => CrearInformeRetiroScreen(
-                                              admin: widget.admin,
-                                              objeto: inf.objeto,
-                                            ),
-                                          ),
-                                        );
-                                        if (creado == true && mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                'Informe de retiro creado para ${inf.objeto.categoria}',
-                                              ),
-                                            ),
-                                          );
-                                          // Recargar lista para que desaparezca de "entrega"
-                                          await _cargar();
-                                        }
-                                      },
+                                      tooltip: retirado ? 'Ya retirado' : 'Registrar retiro',
+                                      onPressed: retirado
+                                          ? null
+                                          : () async {
+                                              final creado =
+                                                  await Navigator.push<bool>(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (_) => CrearInformeRetiroScreen(
+                                                    admin: widget.admin,
+                                                    objeto: inf.objeto,
+                                                  ),
+                                                ),
+                                              );
+                                              if (creado == true && mounted) {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                      'Informe de retiro creado para ${inf.objeto.categoria}',
+                                                    ),
+                                                  ),
+                                                );
+                                                await _cargar();
+                                              }
+                                            },
                                     ),
                                     if (!widget.modoRegistroRetiro)
                                       IconButton(

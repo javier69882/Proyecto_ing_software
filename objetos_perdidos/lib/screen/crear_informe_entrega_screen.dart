@@ -5,6 +5,7 @@ import '../informe.dart';
 import '../Datos/categorias.dart';
 import 'package:objetos_perdidos/Datos/repositories/profiles_repository.dart';
 import 'package:objetos_perdidos/Datos/models/profile_record.dart';
+import 'package:objetos_perdidos/ui/profile_selector.dart';
 
 class CrearInformeEntregaScreen extends StatefulWidget {
   final InformesRepository repo;
@@ -92,7 +93,19 @@ class _CrearInformeEntregaScreenState extends State<CrearInformeEntregaScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Informe de Entrega')),
+      appBar: AppBar(
+        title: const Text('Informe de Entrega'),
+        actions: [
+          IconButton(
+            tooltip: 'Volver al inicio',
+            icon: const Icon(Icons.home),
+            onPressed: () {
+              ProfileScope.of(context).clear();
+              Navigator.of(context, rootNavigator: true).popUntil((r) => r.isFirst);
+            },
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(

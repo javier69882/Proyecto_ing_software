@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:objetos_perdidos/objeto_perdido.dart';
 import 'package:objetos_perdidos/perfil.dart';
 import 'package:objetos_perdidos/Datos/repositories/informes_repository.dart';
+import 'package:objetos_perdidos/ui/profile_selector.dart';
 
 class CrearInformeRetiroScreen extends StatefulWidget {
   final InformesRepository repo;
@@ -96,6 +97,16 @@ class _CrearInformeRetiroScreenState extends State<CrearInformeRetiroScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Registrar retiro de objeto'),
+        actions: [
+          IconButton(
+            tooltip: 'Volver al inicio',
+            icon: const Icon(Icons.home),
+            onPressed: () {
+              ProfileScope.of(context).clear();
+              Navigator.of(context, rootNavigator: true).popUntil((r) => r.isFirst);
+            },
+          ),
+        ],
       ),
       body: Form(
         key: _formKey,

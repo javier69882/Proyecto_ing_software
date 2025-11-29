@@ -247,6 +247,14 @@ class _PublicacionesFeedScreenState extends State<PublicacionesFeedScreen> {
               onPressed: _cargando ? null : _cargar,
               icon: const Icon(Icons.refresh),
             ),
+            IconButton(
+              tooltip: 'Volver al inicio',
+              onPressed: () {
+                ProfileScope.of(context).clear();
+                Navigator.of(context, rootNavigator: true).popUntil((r) => r.isFirst);
+              },
+              icon: const Icon(Icons.home),
+            ),
           ],
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(56),

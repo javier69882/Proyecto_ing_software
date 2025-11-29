@@ -109,7 +109,19 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
     final habilitado = !_guardando;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Crear publicación')),
+      appBar: AppBar(
+        title: const Text('Crear publicación'),
+        actions: [
+          IconButton(
+            tooltip: 'Volver al inicio',
+            icon: const Icon(Icons.home),
+            onPressed: () {
+              ProfileScope.of(context).clear();
+              Navigator.of(context, rootNavigator: true).popUntil((r) => r.isFirst);
+            },
+          ),
+        ],
+      ),
       body: Form(
         key: _formKey,
         child: ListView(

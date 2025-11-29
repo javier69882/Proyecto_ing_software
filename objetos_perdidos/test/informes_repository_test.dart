@@ -269,21 +269,25 @@ void main() {
       expect(txtContent, contains('UsuarioId: ${admin.id}'));
       expect(txtContent, contains('NotaHora: '));
 
-      // 3) al crear el retiro debería borrarse el informe de entrega JSON asociado
+      // 3) al crear el retiro se marca el informe de entrega como retirado (no se borra)
       final jsonFilesDespues = baseDir
           .listSync()
           .whereType<File>()
           .where((f) => f.path.toLowerCase().endsWith('.json'))
           .toList();
 
-      // Debe haberse eliminado el archivo JSON del informe de entrega asociado
-      // (mismo objeto.id). Comprobamos que no exista ningún JSON cuyo objeto.id
-      // coincida con el del informe de entrega inicial.
-      final entregaJsonSigue = jsonFilesDespues.any((f) {
-        final content = f.readAsStringSync();
-        return content.contains('"objeto"') && content.contains('"id":"${informeEntrega.objeto.id}"');
-      });
-      expect(entregaJsonSigue, isFalse);
+      // Debe existir el JSON con el mismo objeto.id y contener campos de retiro
+      final entregaJson = jsonFilesDespues.firstWhere(
+        (f) {
+          final content = f.readAsStringSync();
+          return content.contains('"objeto"') && content.contains('"id":"${informeEntrega.objeto.id}"');
+        },
+        orElse: () => File(''),
+      );
+      expect(entregaJson.path.isNotEmpty, isTrue);
+      final jsonContent = entregaJson.readAsStringSync();
+      expect(jsonContent, contains('"retiroId"'));
+      expect(jsonContent, contains('"retiradoPor":"Pedro"'));
 
       // 4) el entregador existe en el repositorio de perfiles (sin chequear puntos)
       final perfiles = await profilesRepo.listProfiles();

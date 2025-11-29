@@ -1,0 +1,7 @@
+ID: INF-RET-20251129-011054553
+ObjetoId: OBJ-20251129-011037-1764389437203388
+UsuarioId: javier
+Titulo: Retiro de Documentos
+NotaTexto: SDGSDG
+NotaHora: 2025-11-29T01:10:54.553241
+RetiradoPor: FSFG

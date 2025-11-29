@@ -32,7 +32,16 @@ abstract class Informe {
         'adminIsAdmin': admin.isAdmin,
         'fechaCreacion': fechaCreacion.toIso8601String(),
         if (this is InformeEntrega)
-          'entregadoPor': (this as InformeEntrega).entregadoPorUsuario,
+          ...{
+            'entregadoPor': (this as InformeEntrega).entregadoPorUsuario,
+            if ((this as InformeEntrega).retiroId != null)
+              'retiroId': (this as InformeEntrega).retiroId,
+            if ((this as InformeEntrega).retiradoPor != null)
+              'retiradoPor': (this as InformeEntrega).retiradoPor,
+            if ((this as InformeEntrega).retiradoFecha != null)
+              'retiradoFecha':
+                  (this as InformeEntrega).retiradoFecha!.toIso8601String(),
+          },
         if (this is InformeRetiro)
           'retiradoPor': (this as InformeRetiro).retiradoPorUsuario,
         if (nota != null) 'nota': nota!.toJson(),
@@ -72,6 +81,11 @@ abstract class Informe {
           perfil,
           fecha,
           (json['entregadoPor'] as String?) ?? '',
+          retiroId: json['retiroId'] as String?,
+          retiradoPor: json['retiradoPor'] as String?,
+          retiradoFecha: DateTime.tryParse(
+            (json['retiradoFecha'] as String?) ?? '',
+          ),
           nota: nota,
         );
       case 'retiro':
@@ -93,6 +107,9 @@ abstract class Informe {
 // Informe generado cuando el objeto es entregado a la oficina por la persona que lo encontró
 class InformeEntrega extends Informe {
   String entregadoPorUsuario; // usuario que entregó el objeto
+  String? retiroId;
+  String? retiradoPor;
+  DateTime? retiradoFecha;
 
   @override
   String get tipo => 'entrega';
@@ -104,8 +121,13 @@ class InformeEntrega extends Informe {
     super.admin,
     super.fechaCreacion,
     this.entregadoPorUsuario, {
+    this.retiroId,
+    this.retiradoPor,
+    this.retiradoFecha,
     super.nota,
   });
+
+  bool get estaRetirado => retiroId != null;
 }
 
 // Informe generado cuando el objeto se devuelve al dueño.

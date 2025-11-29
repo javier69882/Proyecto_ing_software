@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import '../Datos/repositories/informes_repository.dart';
 import '../perfil.dart';
+import '../ui/profile_selector.dart';
 
 class _RetiroItem {
   final String id;
@@ -163,6 +164,14 @@ class _ListarInformesRetiroScreenState
             icon: const Icon(Icons.refresh),
             tooltip: 'Recargar',
             onPressed: _cargar,
+          ),
+          IconButton(
+            icon: const Icon(Icons.home),
+            tooltip: 'Volver al inicio',
+            onPressed: () {
+              ProfileScope.of(context).clear();
+              Navigator.of(context, rootNavigator: true).popUntil((route) => route.isFirst);
+            },
           ),
         ],
       ),

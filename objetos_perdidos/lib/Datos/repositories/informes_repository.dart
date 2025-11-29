@@ -201,8 +201,11 @@ class InformesRepository {
               // sumar puntos al entregador (si es perfil común)
               await profilesRepo.addPointsForNombre(entregadoPor, kPuntosPorEntrega);
             }
-            // borrar el informe de entrega vinculado
-            await f.delete();
+            data['retiroId'] = id;
+            data['retiradoPor'] = retiradoPorUsuario;
+            data['retiradoFecha'] = nota.hora.toIso8601String();
+            data['retirado'] = true;
+            await f.writeAsString(jsonEncode(data), flush: true);
           }
         } catch (e) {
           print('[InformesRepository] error processing associated entrega for objetoId=$objetoId: $e');
