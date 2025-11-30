@@ -1,0 +1,7 @@
+ID: INF-RET-20251130-181435109
+ObjetoId: OBJ-20251130-180813-1764536893376357
+UsuarioId: javier
+Titulo: Retiro por subasta cargador mac
+NotaTexto: Subasta 1764537105275522 cerrada con puja de 20 pts,cargador mac
+NotaHora: 2025-11-30T18:14:35.109313
+RetiradoPor: Javier Argomedo

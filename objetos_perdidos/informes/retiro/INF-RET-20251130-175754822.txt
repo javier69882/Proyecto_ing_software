@@ -1,0 +1,7 @@
+ID: INF-RET-20251130-175754822
+ObjetoId: OBJ-20251130-170905-1764533345941658
+UsuarioId: javier
+Titulo: Retiro por subasta ferrari rojo
+NotaTexto: Subasta 1764533953959286 cerrada con puja de 13 pts,ferrari
+NotaHora: 2025-11-30T17:57:54.823401
+RetiradoPor: pierluigi

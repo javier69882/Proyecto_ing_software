@@ -62,6 +62,9 @@ class SubastaService {
 
     // 1. Cargar subasta
     final subasta = await _loadSubasta(subastaId);
+    if (!subasta.activa) {
+      throw StateError('La subasta ya finalizó');
+    }
 
     // 2. Validación 1: Saldo del usuario
     final userProfile = await _loadUserProfile(userId);
@@ -73,8 +76,16 @@ class SubastaService {
       );
     }
 
-    // 3. Validación 2: La puja debe ser mayor que la actual
-    if (cantidad <= subasta.actualPuja.toInt()) {
+    // 3. Validación 2: Monto mínimo
+    final hasBids = subasta.mayorPostorId != null && subasta.mayorPostorId!.isNotEmpty;
+    if (cantidad < subasta.minPuja.toInt()) {
+      throw InvalidBidAmount(
+        bidAmount: cantidad.toDouble(),
+        currentBidAmount: subasta.minPuja,
+        subastaId: subastaId,
+      );
+    }
+    if (hasBids && cantidad <= subasta.actualPuja.toInt()) {
       throw InvalidBidAmount(
         bidAmount: cantidad.toDouble(),
         currentBidAmount: subasta.actualPuja,
@@ -94,6 +105,9 @@ class SubastaService {
       actualPuja: cantidad.toDouble(),
       mayorPostorId: userId,
       fechaFin: subasta.fechaFin,
+      cerrada: false,
+      ganadorId: null,
+      fechaCierre: null,
     );
 
     // Actualizar perfil del usuario actual (descuentar puntos)
@@ -123,6 +137,84 @@ class SubastaService {
       // Si algo falla, intentar recuperar (rollback best-effort)
       throw PersistenceError(
         'Error al guardar cambios de puja para $subastaId: $e',
+        e,
+      );
+    }
+  }
+
+  Future<Subasta> cerrarSubastaManual({
+    required String subastaId,
+    String? ganadorId,
+  }) async {
+    final subasta = await _loadSubasta(subastaId);
+    if (subasta.cerrada) return subasta;
+
+    final ganadorTrim = ganadorId?.trim() ?? '';
+    final sinGanador = (ganadorTrim.isEmpty && (subasta.mayorPostorId == null || subasta.mayorPostorId!.isEmpty));
+    ProfileRecord? ganadorProfile;
+    String? ganadorNombre;
+    int monto = subasta.actualPuja.toInt();
+
+    if (!sinGanador) {
+      ganadorProfile = await _loadUserProfile(
+        subasta.mayorPostorId?.isNotEmpty == true ? subasta.mayorPostorId! : ganadorTrim,
+      );
+      ganadorNombre = ganadorProfile.nombre;
+    }
+
+    // Perfil anterior (si el ganador cambia hay que reembolsar)
+    final previousBidder = subasta.mayorPostorId;
+    ProfileRecord? previousProfile;
+    if (!sinGanador &&
+        previousBidder != null &&
+        previousBidder.isNotEmpty &&
+        previousBidder != ganadorNombre) {
+      previousProfile = await _loadUserProfile(previousBidder);
+    }
+
+    // Si el ganador no es el actual mayor postor, cobramos la puja al ganador.
+    ProfileRecord? updatedWinner;
+    if (!sinGanador && ganadorProfile != null) {
+      if (previousBidder == null || previousBidder != ganadorNombre) {
+        if (ganadorProfile.puntos < monto) {
+          throw InsufficientFunds(
+            userId: ganadorNombre ?? '',
+            requiredPoints: monto,
+            availablePoints: ganadorProfile.puntos,
+          );
+        }
+        updatedWinner = ganadorProfile.copyWith(puntos: ganadorProfile.puntos - monto);
+      }
+    }
+
+    final ahora = DateTime.now();
+
+    final updated = subasta.copyWith(
+      cerrada: true,
+      ganadorId: ganadorNombre,
+      mayorPostorId: ganadorNombre ?? subasta.mayorPostorId,
+      fechaFin: ahora,
+      fechaCierre: ahora,
+    );
+
+    try {
+      await _saveSubasta(updated);
+
+      if (updatedWinner != null) {
+        await _saveUserProfile(updatedWinner);
+      }
+
+      if (previousProfile != null) {
+        final refunded = previousProfile.copyWith(
+          puntos: previousProfile.puntos + monto,
+        );
+        await _saveUserProfile(refunded);
+      }
+
+      return updated;
+    } catch (e) {
+      throw PersistenceError(
+        'Error al cerrar subasta $subastaId: $e',
         e,
       );
     }

@@ -71,7 +71,7 @@ class _CrearSubastaScreenState extends State<CrearSubastaScreen> {
       final objetosElegibles = <_Elegible>[];
       final seen = <String>{};
       for (final informe in informes) {
-        if (informe is InformeEntrega) {
+        if (informe is InformeEntrega && !informe.estaRetirado) {
           if (informe.fechaCreacion.isBefore(hace6Meses)) {
             final obj = informe.objeto;
             if (!seen.contains(obj.id)) {

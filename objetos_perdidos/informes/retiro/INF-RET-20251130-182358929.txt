@@ -1,0 +1,7 @@
+ID: INF-RET-20251130-182358929
+ObjetoId: OBJ-20251130-182048-1764537648629232
+UsuarioId: javier
+Titulo: Retiro por subasta gta 6
+NotaTexto: Subasta gta6 1764537781422367 cerrada con puja de 80 pts.
+NotaHora: 2025-11-30T18:23:58.929846
+RetiradoPor: Javier Argomedo

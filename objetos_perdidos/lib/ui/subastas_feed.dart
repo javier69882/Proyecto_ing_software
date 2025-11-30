@@ -30,11 +30,13 @@ class _SubastasFeedScreenState extends State<SubastasFeedScreen> {
   List<Subasta> _subastas = <Subasta>[];
   late SubastaService _service;
   final Map<String, String> _itemTitles = {};
+  final Map<String, ObjetoPerdido> _itemObjetos = {};
 
   // UI State para cada subasta (almacenar cantidad pujeada en cada tarjeta)
   final Map<String, TextEditingController> _bidControllers =
       <String, TextEditingController>{};
   final Map<String, bool> _pujando = <String, bool>{};
+  final Map<String, bool> _cerrando = <String, bool>{};
 
   @override
   void initState() {
@@ -63,11 +65,15 @@ class _SubastasFeedScreenState extends State<SubastasFeedScreen> {
         final informesRepo = InformesRepository();
         final informes = await informesRepo.listInformes((usuario) => Perfil(usuario, 0, <ObjetoPerdido>[]));
         _itemTitles.clear();
+        _itemObjetos.clear();
         for (final inf in informes) {
           if (inf is InformeEntrega) {
             final objetoId = inf.objeto.id;
             if (objetoId.isNotEmpty && !_itemTitles.containsKey(objetoId)) {
               _itemTitles[objetoId] = inf.titulo;
+            }
+            if (objetoId.isNotEmpty && !_itemObjetos.containsKey(objetoId)) {
+              _itemObjetos[objetoId] = inf.objeto;
             }
           }
         }
@@ -77,10 +83,19 @@ class _SubastasFeedScreenState extends State<SubastasFeedScreen> {
       if (!mounted) return;
       setState(() {
         _subastas = subastas;
+        final ids = subastas.map((s) => s.subastaId).toSet();
+        final toRemove = _bidControllers.keys.where((k) => !ids.contains(k)).toList();
+        for (final id in toRemove) {
+          _bidControllers[id]?.dispose();
+          _bidControllers.remove(id);
+        }
+        _pujando.removeWhere((k, _) => !ids.contains(k));
+        _cerrando.removeWhere((k, _) => !ids.contains(k));
         // Inicializar controllers para cada subasta
         for (final s in subastas) {
           _bidControllers.putIfAbsent(s.subastaId, () => TextEditingController());
           _pujando.putIfAbsent(s.subastaId, () => false);
+          _cerrando.putIfAbsent(s.subastaId, () => false);
         }
       });
     } catch (e) {
@@ -161,9 +176,14 @@ class _SubastasFeedScreenState extends State<SubastasFeedScreen> {
       );
     } on InvalidBidAmount catch (e) {
       if (!mounted) return;
+      final minMensaje = subasta.mayorPostorId == null || subasta.mayorPostorId!.isEmpty;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('La puja debe ser mayor a ${e.currentBidAmount.toInt()} puntos'),
+          content: Text(
+            minMensaje
+                ? 'La puja debe ser al menos ${subasta.minPuja.toInt()} puntos'
+                : 'La puja debe ser mayor a ${e.currentBidAmount.toInt()} puntos',
+          ),
           backgroundColor: Colors.red[700],
         ),
       );
@@ -192,8 +212,199 @@ class _SubastasFeedScreenState extends State<SubastasFeedScreen> {
     }
   }
 
+  Future<_CerrarSubastaData?> _mostrarDialogoCierre(Subasta subasta) async {
+    final hasWinner = subasta.mayorPostorId != null && subasta.mayorPostorId!.isNotEmpty;
+    final ganadorCtrl = TextEditingController(text: subasta.mayorPostorId ?? '');
+    final notaCtrl = TextEditingController(
+      text: 'Subasta ${subasta.subastaId} cerrada con puja de ${subasta.actualPuja.toInt()} pts.',
+    );
+
+    final result = await showDialog<_CerrarSubastaData>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Cerrar subasta antes de tiempo'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              hasWinner
+                  ? 'Ganador fijo: ${subasta.mayorPostorId}'
+                  : 'No hay pujas registradas. Ingresa el ganador manualmente.',
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: ganadorCtrl,
+              readOnly: hasWinner,
+              decoration: const InputDecoration(
+                labelText: 'Usuario ganador',
+                hintText: 'Nombre de perfil',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: notaCtrl,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: 'Nota para el informe',
+                hintText: 'Detalle la entrega al ganador',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.flag),
+            onPressed: () {
+              Navigator.pop(
+                ctx,
+                _CerrarSubastaData(
+                  ganadorCtrl.text.trim(),
+                  notaCtrl.text.trim(),
+                ),
+              );
+            },
+            label: const Text('Cerrar subasta'),
+          ),
+        ],
+      ),
+    );
+
+    ganadorCtrl.dispose();
+    notaCtrl.dispose();
+    return result;
+  }
+
+  Future<void> _cerrarSubasta(Subasta subasta) async {
+    final persona = ProfileScope.of(context).current;
+    if (persona is! Perfil || !persona.isAdmin) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Debes ser administrador para cerrar subastas')),
+      );
+      return;
+    }
+
+    final objeto = _itemObjetos[subasta.itemId];
+    if (objeto == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se encontró el objeto asociado a la subasta')),
+      );
+      return;
+    }
+
+    final datos = await _mostrarDialogoCierre(subasta);
+    if (datos == null) return;
+    final ganadorId = (subasta.mayorPostorId?.isNotEmpty == true
+            ? subasta.mayorPostorId
+            : datos.ganadorId)
+        ?.trim() ??
+        '';
+
+    setState(() {
+      _cerrando[subasta.subastaId] = true;
+    });
+
+    final nota = datos.nota.isEmpty
+        ? 'Subasta ${subasta.subastaId} cerrada de forma anticipada. '
+            'Puja ganadora: ${subasta.actualPuja.toInt()} pts.'
+        : datos.nota;
+
+    try {
+      final cerrada = await _service.cerrarSubastaManual(
+        subastaId: subasta.subastaId,
+        ganadorId: ganadorId.isEmpty ? null : ganadorId,
+      );
+
+      if (cerrada.ganadorId != null && cerrada.ganadorId!.isNotEmpty) {
+        final informesRepo = InformesRepository();
+        final titulo = 'Retiro por subasta ${_itemTitles[subasta.itemId] ?? subasta.itemId}';
+
+        await informesRepo.createInformeRetiro(
+          admin: persona,
+          objeto: objeto,
+          titulo: titulo,
+          notaTexto: nota,
+          retiradoPorUsuario: cerrada.ganadorId ?? ganadorId,
+        );
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Subasta cerrada. Ganador: ${cerrada.ganadorId ?? ganadorId}',
+            ),
+            backgroundColor: Colors.green[700],
+          ),
+        );
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Subasta cerrada sin pujas. Objeto sigue en informes de entrega.'),
+          ),
+        );
+      }
+      await _cargar();
+    } on UserNotFound catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('El ganador no coincide con ningún perfil registrado'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } on SubastaNotFound catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Subasta no encontrada: ${e.subastaId}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } on InsufficientFunds catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'El ganador seleccionado no tiene saldo suficiente (${e.availablePoints}/${e.requiredPoints} pts)',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } on ArgumentError catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No se pudo cerrar la subasta: ${e.message}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al cerrar la subasta: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _cerrando[subasta.subastaId] = false;
+        });
+      }
+    }
+  }
+
   String _formatFecha(DateTime fecha) {
     final ahora = DateTime.now();
+    if (fecha.isBefore(ahora)) {
+      return 'Finalizada';
+    }
     final diferencia = fecha.difference(ahora);
 
     if (diferencia.inSeconds < 60) {
@@ -212,6 +423,7 @@ class _SubastasFeedScreenState extends State<SubastasFeedScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     final persona = ProfileScope.of(context).current;
     final esUsuarioComun = persona is Perfil && !persona.isAdmin;
+    final esAdmin = persona is Perfil && persona.isAdmin;
 
     return Scaffold(
       appBar: AppBar(
@@ -254,7 +466,8 @@ class _SubastasFeedScreenState extends State<SubastasFeedScreen> {
                     itemBuilder: (context, index) {
                       final subasta = _subastas[index];
                       final tiempoRestante = _formatFecha(subasta.fechaFin);
-                      final estaActiva = subasta.fechaFin.isAfter(DateTime.now());
+                      final estaActiva = subasta.activa;
+                      final estaCerrando = _cerrando[subasta.subastaId] ?? false;
 
                       return _buildSubastaCard(
                         context: context,
@@ -262,6 +475,8 @@ class _SubastasFeedScreenState extends State<SubastasFeedScreen> {
                         tiempoRestante: tiempoRestante,
                         estaActiva: estaActiva,
                         esUsuarioComun: esUsuarioComun,
+                        esAdmin: esAdmin,
+                        estaCerrando: estaCerrando,
                         colorScheme: colorScheme,
                       );
                     },
@@ -276,10 +491,18 @@ class _SubastasFeedScreenState extends State<SubastasFeedScreen> {
     required String tiempoRestante,
     required bool estaActiva,
     required bool esUsuarioComun,
+    required bool esAdmin,
+    required bool estaCerrando,
     required ColorScheme colorScheme,
   }) {
     final estaPujando = _pujando[subasta.subastaId] ?? false;
     final controller = _bidControllers[subasta.subastaId];
+    final estaCerrada = subasta.cerrada || !estaActiva;
+    final estadoTexto = estaCerrada ? 'Cerrada' : 'Activa';
+    final estadoColor =
+        estaCerrada ? Colors.red[100] : colorScheme.primaryContainer;
+    final estadoTextColor =
+        estaCerrada ? Colors.red[800] : colorScheme.onPrimaryContainer;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -318,15 +541,15 @@ class _SubastasFeedScreenState extends State<SubastasFeedScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: estaActiva ? colorScheme.primaryContainer : Colors.red[100],
+                    color: estadoColor,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    estaActiva ? 'Activa' : 'Finalizada',
+                    estadoTexto,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: estaActiva ? colorScheme.onPrimaryContainer : Colors.red[700],
+                      color: estadoTextColor,
                     ),
                   ),
                 ),
@@ -471,12 +694,66 @@ class _SubastasFeedScreenState extends State<SubastasFeedScreen> {
                   ),
                 ],
               ),
-            ] else if (!esUsuarioComun && estaActiva) ...[
+            ] else if (esAdmin && estaActiva) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red[50],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Cierre anticipado',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.red[800],
+                          ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      subasta.mayorPostorId == null || subasta.mayorPostorId!.isEmpty
+                          ? 'Sin pujas registradas aún.'
+                          : 'Mayor postor: ${subasta.mayorPostorId} con ${subasta.actualPuja.toInt()} pts',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.red[900],
+                          ),
+                    ),
+                    const SizedBox(height: 10),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red[700],
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: estaCerrando ? null : () => _cerrarSubasta(subasta),
+                        icon: estaCerrando
+                            ? SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                            : const Icon(Icons.flag),
+                        label: Text(estaCerrando ? 'Cerrando...' : 'Cerrar ahora'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ] else if (!esUsuarioComun && !esAdmin && estaActiva) ...[
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 child: Center(
                   child: Text(
-                    'Los administradores no pueden pujar',
+                    'Selecciona un perfil de usuario para pujar.',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Colors.grey[600],
                           fontStyle: FontStyle.italic,
@@ -490,4 +767,11 @@ class _SubastasFeedScreenState extends State<SubastasFeedScreen> {
       ),
     );
   }
+}
+
+class _CerrarSubastaData {
+  final String ganadorId;
+  final String nota;
+
+  _CerrarSubastaData(this.ganadorId, this.nota);
 }

@@ -190,19 +190,19 @@ class InformesRepository {
           if (content.trim().isEmpty) continue;
           final dynamic data = jsonDecode(content);
           if (data is! Map<String, dynamic>) continue;
-          final tipo = data['tipo'] as String? ?? '';
-          if (tipo != 'entrega') continue;
-          final objetoJson = data['objeto'];
-          if (objetoJson is! Map<String, dynamic>) continue;
-          final idJson = objetoJson['id'] as String?;
-          if (idJson == objetoId) {
-            final entregadoPor = (data['entregadoPor'] as String?) ?? '';
-            if (entregadoPor.isNotEmpty) {
-              // sumar puntos al entregador (si es perfil común)
-              await profilesRepo.addPointsForNombre(entregadoPor, kPuntosPorEntrega);
-            }
-            data['retiroId'] = id;
-            data['retiradoPor'] = retiradoPorUsuario;
+            final tipo = data['tipo'] as String? ?? '';
+            if (tipo != 'entrega') continue;
+            final objetoJson = data['objeto'];
+            if (objetoJson is! Map<String, dynamic>) continue;
+            final idJson = objetoJson['id'] as String?;
+            if (idJson == objetoId) {
+              final entregadoPor = (data['entregadoPor'] as String?) ?? '';
+              if (entregadoPor.isNotEmpty && entregadoPor != retiradoPorUsuario) {
+                // sumar puntos al entregador (si es perfil común)
+                await profilesRepo.addPointsForNombre(entregadoPor, kPuntosPorEntrega);
+              }
+              data['retiroId'] = id;
+              data['retiradoPor'] = retiradoPorUsuario;
             data['retiradoFecha'] = nota.hora.toIso8601String();
             data['retirado'] = true;
             await f.writeAsString(jsonEncode(data), flush: true);

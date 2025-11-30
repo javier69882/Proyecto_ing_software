@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import '../models/subasta.dart';
+import '../models/exceptions.dart';
 
 class SubastasRepository {
   final Directory? _overrideBaseDir;
@@ -62,6 +63,9 @@ class SubastasRepository {
       actualPuja: minPuj,
       mayorPostorId: null,
       fechaFin: cierre,
+      cerrada: false,
+      ganadorId: null,
+      fechaCierre: null,
     );
 
     final file = await _fileForId(id);
@@ -73,7 +77,6 @@ class SubastasRepository {
     try {
       final dir = await _resolveSubastasDir();
       final files = await dir.list().toList();
-      final now = DateTime.now();
       final result = <Subasta>[];
       for (final f in files) {
         if (f is! File || !f.path.toLowerCase().endsWith('.json')) continue;
@@ -83,7 +86,7 @@ class SubastasRepository {
           final dynamic data = jsonDecode(content);
           if (data is! Map<String, dynamic>) continue;
           final subasta = Subasta.fromJson(data);
-          if (subasta.fechaFin.isAfter(now)) {
+          if (subasta.activa) {
             result.add(subasta);
           }
         } catch (_) {}
@@ -109,5 +112,51 @@ class SubastasRepository {
   /// Esta es una API pública para SubastaService.
   Future<Directory> getSubastasDir() async {
     return _resolveSubastasDir();
+  }
+
+  Future<Subasta?> loadSubasta(String subastaId) async {
+    try {
+      final file = await _fileForId(subastaId);
+      if (!await file.exists()) return null;
+      final content = await file.readAsString();
+      if (content.trim().isEmpty) return null;
+      final dynamic data = jsonDecode(content);
+      if (data is! Map<String, dynamic>) return null;
+      return Subasta.fromJson(data);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> saveSubasta(Subasta subasta) async {
+    final file = await _fileForId(subasta.subastaId);
+    await file.writeAsString(jsonEncode(subasta.toJson()), flush: true);
+  }
+
+  Future<Subasta> cerrarSubasta({
+    required String subastaId,
+    required String ganadorId,
+  }) async {
+    final subasta = await loadSubasta(subastaId);
+    if (subasta == null) {
+      throw SubastaNotFound(subastaId);
+    }
+    final now = DateTime.now();
+    final ganador = ganadorId.trim();
+    if (ganador.isEmpty) {
+      throw ArgumentError('ganadorId es obligatorio');
+    }
+
+    final updated = subasta.copyWith(
+      cerrada: true,
+      ganadorId: ganador,
+      mayorPostorId: subasta.mayorPostorId?.isNotEmpty == true
+          ? subasta.mayorPostorId
+          : ganador,
+      fechaFin: now,
+      fechaCierre: now,
+    );
+    await saveSubasta(updated);
+    return updated;
   }
 }
