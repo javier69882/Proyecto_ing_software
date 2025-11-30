@@ -6,7 +6,9 @@ import 'package:objetos_perdidos/Datos/repositories/publications_repository.dart
 import 'package:objetos_perdidos/Datos/models/publication_record.dart';
 import 'package:objetos_perdidos/ui/profile_selector.dart';
 import 'package:objetos_perdidos/ui/publicaciones_feed.dart';
+import 'package:objetos_perdidos/ui/subastas_feed.dart';
 import 'package:objetos_perdidos/Datos/repositories/informes_repository.dart';
+import 'package:objetos_perdidos/Datos/repositories/subastas_repository.dart';
 import 'package:objetos_perdidos/screen/admin_actions_screen.dart';
 import 'package:objetos_perdidos/perfil.dart';
 import 'package:objetos_perdidos/informe.dart';
@@ -70,6 +72,7 @@ class _DemoHomeState extends State<DemoHome> {
   String? _ultimaRuta;
   final _pubRepo = PublicationsRepository();
   final _informesRepo = InformesRepository();
+  final _subastaRepo = SubastasRepository();
   List<PublicationRecord> _publicaciones = [];
   List<Informe> _informesAdmin = [];
   bool _cargandoInformesAdmin = false;
@@ -542,6 +545,23 @@ class _DemoHomeState extends State<DemoHome> {
         },
         icon: const Icon(Icons.dynamic_feed),
         label: const Text('Ver feed con filtros'),
+      ),
+    );
+    acciones.add(
+      FilledButton.tonalIcon(
+        onPressed: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => SubastasFeedScreen(
+                subastaRepository: _subastaRepo,
+                profilesRepository: widget.repo,
+              ),
+            ),
+          );
+        },
+        icon: const Icon(Icons.gavel),
+        label: const Text('Ver subastas'),
       ),
     );
 

@@ -1,0 +1,1 @@
+{"id":"1764532970197069","titulo":"perdi mi ferrari","descripcion":"lo vendieron y se lo repartieron, erar rojo","categoria":"Otros","fechaIso":"2024-05-08T00:00:00.000","lugar":"facultad de filosofia","autorId":"diego","autorNombre":"diego"}

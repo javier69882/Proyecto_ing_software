@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../Datos/repositories/informes_repository.dart';
+import '../Datos/repositories/subastas_repository.dart';
 import '../informe.dart';
 import '../perfil.dart';
 import 'crear_informe_entrega_screen.dart';
+import 'crear_subasta_screen.dart';
 import 'listar_informes_screen.dart';
 import 'listar_informes_retiro_screen.dart';
 import '../ui/profile_selector.dart';
@@ -10,12 +12,14 @@ import '../ui/profile_selector.dart';
 class AdminActionsScreen extends StatefulWidget {
   final Perfil admin;
   final InformesRepository informesRepo;
+  final SubastasRepository? subastaRepo;
 
   const AdminActionsScreen({
     super.key,
     required this.admin,
     required this.informesRepo,
-  });
+    SubastasRepository? subastaRepository,
+  }) : subastaRepo = subastaRepository ?? null;
 
   @override
   State<AdminActionsScreen> createState() => _AdminActionsScreenState();
@@ -75,6 +79,27 @@ class _AdminActionsScreenState extends State<AdminActionsScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _crearSubasta() async {
+    final subastaRepo = widget.subastaRepo ?? SubastasRepository();
+    final creado = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CrearSubastaScreen(
+          subastaRepository: subastaRepo,
+        ),
+      ),
+    );
+    if (!mounted) return;
+    if (creado == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Subasta creada exitosamente'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
   }
 
   @override
@@ -146,6 +171,15 @@ class _AdminActionsScreenState extends State<AdminActionsScreen> {
                           spacing: 12,
                           runSpacing: 12,
                           children: [
+                            _adminActionButton(
+                              context,
+                              icon: Icons.gavel,
+                              label: 'Crear subasta',
+                              description: 'Inicia una subasta para un objeto perdido.',
+                              onPressed: _crearSubasta,
+                              color: const Color(0xFFFFE0B2),
+                              textColor: Colors.orange[900]!,
+                            ),
                             _adminActionButton(
                               context,
                               icon: Icons.assignment_add,

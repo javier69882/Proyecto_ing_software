@@ -104,4 +104,10 @@ class SubastasRepository {
       return 'error resolving subastas dir: $e';
     }
   }
+
+  /// Expone el directorio de subastas para acceso del servicio.
+  /// Esta es una API pública para SubastaService.
+  Future<Directory> getSubastasDir() async {
+    return _resolveSubastasDir();
+  }
 }

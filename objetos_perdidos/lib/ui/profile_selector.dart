@@ -25,6 +25,17 @@ class ProfileController extends ChangeNotifier {
     notifyListeners();
     try {
       _records = await repo.listProfiles();
+      // Si hay un perfil actual seleccionado, actualizar sus datos
+      if (_current != null) {
+        final currentName = _current!.usuario;
+        final updatedRecord = _records.firstWhere(
+          (r) => r.nombre == currentName,
+          orElse: () => ProfileRecord(id: '', nombre: '', tipo: Tipo.perfil),
+        );
+        if (updatedRecord.nombre.isNotEmpty) {
+          _current = updatedRecord.toPersona();
+        }
+      }
     } catch (e) {
       _records = [];
       _error = e;

@@ -120,4 +120,10 @@ class ProfilesRepository {
     final f = await _resolveFile();
     return f.path;
   }
+
+  /// Expone el archivo de perfiles para acceso del servicio.
+  /// Esta es una API pública para SubastaService.
+  Future<File> getProfilesFile() async {
+    return _resolveFile();
+  }
 }
