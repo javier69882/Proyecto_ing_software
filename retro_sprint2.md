@@ -1,30 +1,31 @@
 # Roles
 
 ### Product Owner
-Javier Argomedo Georgi
+Vicente García
 
 ### Scrum Master
-Víctor Galaz
+Diego Arriagada
 
 ### Developer team:
-Diego Arriagada, Vicente García, Matías Catril
+ Javier Argomedo Georgi, Víctor Galaz
 
 # Retrospectiva Scrum
 
 ### ¿Qué deberiamos hacer más?
-Aumentar la cantidad de reuniones diarias (frecuencia).
+Mantener los dailys en horario fijo, pero aprovechándolas mejor: revisar el tablero, aclarar bloqueos de inmediato y dejar muy claro qué se hará hasta la próxima reunión.
+
 
 ### ¿Qué deberiamos hacer menos?
-Menos reuniones improvisadas y optar por un horario fijo todos los días.
+Dejar los test hazta el final, ya que cada tarea deberia tener su propio test, no deberiamos de hacer una tarea que sea de solo hacer testing, para cumplir la Definition of DONE.
 
 ### ¿Qué deberíamos comenzar a hacer?
-Aplicar herramientas Scrum en las reuniones, dejando atrás la relativa informalidad y espontaneidad de las reuniones sostenidas este sprint—que si bien no fueron un problema en sí mismas, no dejan de ser mejorables.
+Definir y usar de forma consistente una Definition of Done (DoD) que incluya: código revisado, pruebas ejecutadas, documentación mínima actualizada y funcionamiento validado en la interfaz.
 
 ### ¿Qué deberiamos dejar de hacer?
-Tareas dependientes de otras tareas aún por realizarse/por hacerse en paralelo. En caso de mantener esa práctica, asignar tareas que compartan dependencia al mismo desarrollador.
+Dejar de repartir tareas fuertemente relacionadas en ramas o commits mezclados, lo que dificulta la revisión y el seguimiento.
 
 ### ¿Qué deberiamos seguir haciendo?
-Seguir desglosando las historias de usuario en múltiples tareas detalladas que la conforman.
+Seguir desglosando las historias de usuario en tareas pequeñas y bien definidas, ya que eso facilita el avance incremental.
 
 ### Comrpomiso de mejora
-Para el próximo sprint, nos comprometemos a establecer horarios fijos para las reuniones diarias, reducir las reuniones improvisadas y aplicar herramientas Scrum para estructurar mejor las sesiones. Además, evitaremos tareas dependientes entre sí sin haber terminado las previas y asignaremos tareas interdependientes al mismo desarrollador cuando sea posible.
+Como equipo, para el próximo sprint nos comprometemos a respetar y aprovechar los dailys en horario fijo llegando preparados con el estado real de cada tarea y bloqueos concretos, a aplicar siempre la Definition of Done acordada asegurando que cada tarea incluya sus propios tests, revisión de código y documentación mínima, a mantener las tareas coherentes y ordenadas en el repositorio evitando mezclar funcionalidades distintas en la misma rama o commit, y a seguir dividiendo las historias de usuario en tareas pequeñas y manejables, priorizando terminar lo que ya está en curso antes de comenzar nuevas tareas para reducir el trabajo en progreso y evitar arrastres entre sprints.
