@@ -203,13 +203,6 @@ void main() {
 
       admin = Perfil('adminUser', 0, [], isAdmin: true);
 
-      objeto = ObjetoPerdido(
-        'celular',
-        Nota.ahora('negro'),
-        DateTime.now(),
-        'lobby',
-      )..id = 'obj-123';
-
       // perfil de quien entrega en informe de entrega
       await profilesRepo.createProfile(nombre: 'Juan Entregador', tipo: Tipo.perfil);
     });
@@ -225,9 +218,9 @@ void main() {
       final informeEntrega = await repo.createInformeEntrega(
         admin: admin,
         titulo: 'Entrega celular',
-        categoria: objeto.categoria,
+        categoria: 'celular',
         descripcion: 'Se encontró en lobby',
-        lugar: objeto.lugar,
+        lugar: 'lobby',
         entregadoPorUsuario: 'Juan Entregador',
       );
 
@@ -245,7 +238,7 @@ void main() {
       // 2) crear informe de retiro, que debe crear carpeta retiro/ y .txt
       final informeRetiro = await repo.createInformeRetiro(
         admin: admin,
-        objeto: (informeEntrega.objeto)..id = objeto.id,
+        objeto: informeEntrega.objeto,
         titulo: 'Retiro celular',
         notaTexto: 'Dueño retira con CI',
         retiradoPorUsuario: 'Pedro',
@@ -265,7 +258,7 @@ void main() {
       expect(txtFiles.length, 1);
 
       final txtContent = await txtFiles.first.readAsString();
-      expect(txtContent, contains('ObjetoId: ${objeto.id}'));
+      expect(txtContent, contains('ObjetoId: ${informeEntrega.objeto.id}'));
       expect(txtContent, contains('UsuarioId: ${admin.id}'));
       expect(txtContent, contains('NotaHora: '));
 

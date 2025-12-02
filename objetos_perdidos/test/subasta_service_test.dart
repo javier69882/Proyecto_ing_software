@@ -1,8 +1,6 @@
 import 'dart:io';
-import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:objetos_perdidos/Datos/models/subasta.dart';
 import 'package:objetos_perdidos/Datos/models/profile_record.dart';
 import 'package:objetos_perdidos/Datos/models/exceptions.dart';
 import 'package:objetos_perdidos/Datos/repositories/subastas_repository.dart';
